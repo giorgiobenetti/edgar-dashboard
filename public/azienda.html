@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dettaglio Azienda</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      a {
+        color: #333;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .scheda {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 24px;
+        margin-top: 20px;
+      }
+      .scheda h1 {
+        margin: 0 0 8px;
+      }
+      .ticker {
+        display: inline-block;
+        background: #333;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 14px;
+        margin-right: 6px;
+      }
+      .meta {
+        margin-top: 16px;
+        color: #555;
+        line-height: 2;
+      }
+      #loading {
+        color: #888;
+        margin-top: 40px;
+      }
+      #finanziari {
+        margin-top: 30px;
+      }
+      #finanziari h2 {
+        color: #333;
+      }
+      #finanziari table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      #finanziari th,
+      #finanziari td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      #finanziari th {
+        background: #f5f5f5;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="/">← Torna alla lista</a>
+
+    <div id="loading">Caricamento in corso...</div>
+
+    <div
+      id="contenuto"
+      style="display: none"
+    >
+      <div class="scheda">
+        <h1 id="nome"></h1>
+        <div id="tickers"></div>
+        <div class="meta">
+          <div><strong>Settore:</strong> <span id="settore"></span></div>
+          <div><strong>Borsa:</strong> <span id="borsa"></span></div>
+          <div><strong>CIK:</strong> <span id="cik"></span></div>
+          <div><strong>Stato:</strong> <span id="stato"></span></div>
+        </div>
+      </div>
+
+      <div id="finanziari">Caricamento dati finanziari...</div>
+    </div>
+
+    <script src="/azienda.js"></script>
+  </body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Edgar Dashboard</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 1100px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      h1 {
+        color: #333;
+      }
+
+      #ricerca {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        margin: 20px 0;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      th {
+        background: #f5f5f5;
+      }
+      tr:hover {
+        background: #fafafa;
+      }
+
+      #paginazione {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      button {
+        padding: 8px 16px;
+        cursor: pointer;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: white;
+      }
+      button:hover {
+        background: #f5f5f5;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Dashboard Aziende USA</h1>
+
+    <input
+      type="text"
+      id="ricerca"
+      placeholder="Cerca per nome o ticker..."
+    />
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nome azienda</th>
+          <th>Ticker</th>
+          <th>CIK</th>
+        </tr>
+      </thead>
+      <tbody id="tabella"></tbody>
+    </table>
+
+    <div id="paginazione">
+      <button id="btn-precedente">← Precedente</button>
+      <span id="info-pagina"></span>
+      <button id="btn-successivo">Successivo →</button>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
