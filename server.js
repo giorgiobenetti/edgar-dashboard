@@ -45,6 +45,8 @@ app.get("/api/azienda/:cik/finanziari", function (req, res) {
   });
 });
 
-app.listen(3000, function () {
-  console.log("Server avviato su http://localhost:3000");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, function () {
+  console.log("Server avviato su porta " + PORT);
 });
