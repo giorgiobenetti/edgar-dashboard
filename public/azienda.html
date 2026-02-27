@@ -2,92 +2,233 @@
 <html lang="it">
   <head>
     <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
     <title>Dettaglio Azienda</title>
     <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
       body {
-        font-family: sans-serif;
-        max-width: 900px;
-        margin: 40px auto;
-        padding: 0 20px;
-      }
-      a {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f5f7fa;
         color: #333;
-        text-decoration: none;
-      }
-      a:hover {
-        text-decoration: underline;
-      }
-      .scheda {
-        background: #f9f9f9;
-        border: 1px solid #ddd;
-        border-radius: 8px;
         padding: 24px;
-        margin-top: 20px;
       }
-      .scheda h1 {
-        margin: 0 0 8px;
+
+      .header {
+        margin-bottom: 24px;
       }
-      .ticker {
-        display: inline-block;
-        background: #333;
-        color: white;
-        padding: 4px 10px;
-        border-radius: 4px;
+
+      .header a {
+        color: #3b82f6;
+        text-decoration: none;
         font-size: 14px;
-        margin-right: 6px;
       }
-      .meta {
-        margin-top: 16px;
-        color: #555;
-        line-height: 2;
+
+      h1 {
+        font-size: 28px;
+        margin: 8px 0 4px;
       }
-      #loading {
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .info-card {
+        background: white;
+        border-radius: 8px;
+        padding: 14px 18px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+
+      .info-card .label {
+        font-size: 11px;
+        text-transform: uppercase;
         color: #888;
-        margin-top: 40px;
+        margin-bottom: 4px;
       }
-      #finanziari {
-        margin-top: 30px;
+
+      .info-card .value {
+        font-size: 16px;
+        font-weight: 600;
       }
-      #finanziari h2 {
-        color: #333;
+
+      .badge {
+        display: inline-block;
+        background: #dbeafe;
+        color: #1d4ed8;
+        border-radius: 4px;
+        padding: 2px 8px;
+        font-size: 13px;
+        margin-right: 4px;
       }
-      #finanziari table {
+
+      /* Toggle */
+      .toggle-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+
+      .toggle-bar button {
+        padding: 8px 20px;
+        border: 2px solid #3b82f6;
+        border-radius: 6px;
+        background: white;
+        color: #3b82f6;
+        font-size: 14px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .toggle-bar button.attivo {
+        background: #3b82f6;
+        color: white;
+      }
+
+      /* Griglia tabelle */
+      .tabelle-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+      }
+
+      .tabella-card {
+        background: white;
+        border-radius: 8px;
+        padding: 18px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+
+      .tabella-card h3 {
+        font-size: 15px;
+        margin-bottom: 12px;
+        color: #444;
+      }
+
+      table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 10px;
+        font-size: 14px;
       }
-      #finanziari th,
-      #finanziari td {
-        padding: 10px;
-        border: 1px solid #ddd;
+
+      th {
         text-align: left;
+        padding: 8px 10px;
+        background: #f1f5f9;
+        color: #555;
+        font-weight: 600;
       }
-      #finanziari th {
-        background: #f5f5f5;
+
+      td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      td:last-child {
+        text-align: right;
+        font-weight: 500;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      .nd {
+        color: #aaa;
+        font-size: 13px;
+        padding: 12px 0;
       }
     </style>
   </head>
   <body>
-    <a href="/">← Torna alla lista</a>
+    <div class="header">
+      <a href="/">← Torna alla lista</a>
+      <h1 id="nome">Caricamento...</h1>
+      <div id="tickers"></div>
+    </div>
 
-    <div id="loading">Caricamento in corso...</div>
-
-    <div
-      id="contenuto"
-      style="display: none"
-    >
-      <div class="scheda">
-        <h1 id="nome"></h1>
-        <div id="tickers"></div>
-        <div class="meta">
-          <div><strong>Settore:</strong> <span id="settore"></span></div>
-          <div><strong>Borsa:</strong> <span id="borsa"></span></div>
-          <div><strong>CIK:</strong> <span id="cik"></span></div>
-          <div><strong>Stato:</strong> <span id="stato"></span></div>
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">Settore (SIC)</div>
+        <div
+          class="value"
+          id="settore"
+        >
+          —
         </div>
       </div>
+      <div class="info-card">
+        <div class="label">Borsa</div>
+        <div
+          class="value"
+          id="borsa"
+        >
+          —
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="label">Stato incorporazione</div>
+        <div
+          class="value"
+          id="stato"
+        >
+          —
+        </div>
+      </div>
+    </div>
 
-      <div id="finanziari">Caricamento dati finanziari...</div>
+    <!-- Toggle annuale/trimestrale -->
+    <div class="toggle-bar">
+      <button
+        id="toggle-annuale"
+        class="attivo"
+      >
+        Annuale
+      </button>
+      <button id="toggle-trimestrale">Trimestrale</button>
+    </div>
+
+    <!-- Tabelle finanziarie -->
+    <div class="tabelle-grid">
+      <div class="tabella-card">
+        <h3>📊 Ricavi</h3>
+        <div id="tabella-ricavi">Caricamento...</div>
+      </div>
+
+      <div class="tabella-card">
+        <h3>💰 Utile Netto</h3>
+        <div id="tabella-utile">Caricamento...</div>
+      </div>
+
+      <div class="tabella-card">
+        <h3>🔄 Cash Flow Operativo</h3>
+        <div id="tabella-cf">Caricamento...</div>
+      </div>
+
+      <div class="tabella-card">
+        <h3>💵 Free Cash Flow</h3>
+        <div id="tabella-fcf">Caricamento...</div>
+      </div>
+
+      <div class="tabella-card">
+        <h3>📈 ROE</h3>
+        <div id="tabella-roe">Caricamento...</div>
+      </div>
+
+      <div class="tabella-card">
+        <h3>📉 ROI</h3>
+        <div id="tabella-roi">Caricamento...</div>
+      </div>
     </div>
 
     <script src="/azienda.js"></script>

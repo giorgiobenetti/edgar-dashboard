@@ -88,17 +88,44 @@ function getDatiFinanziari(cik, callback) {
       const facts = JSON.parse(data);
       const usGaap = facts.facts["us-gaap"];
 
-      const risultato = {
-        ricavi:
-          usGaap?.Revenues?.units?.USD ||
-          usGaap?.RevenueFromContractWithCustomerExcludingAssessedTax?.units
-            ?.USD ||
-          [],
-        utile: usGaap?.NetIncomeLoss?.units?.USD || [],
-        assets: usGaap?.Assets?.units?.USD || [],
-      };
+      // Ricavi - prova tag alternativi
+      const ricavi =
+        usGaap?.Revenues?.units?.USD ||
+        usGaap?.RevenueFromContractWithCustomerExcludingAssessedTax?.units
+          ?.USD ||
+        usGaap?.SalesRevenueNet?.units?.USD ||
+        [];
 
-      callback(null, risultato);
+      // Utile netto
+      const utile = usGaap?.NetIncomeLoss?.units?.USD || [];
+
+      // Assets totali
+      const assets = usGaap?.Assets?.units?.USD || [];
+
+      // Patrimonio netto (per ROE)
+      const patrimonioNetto =
+        usGaap?.StockholdersEquity?.units?.USD ||
+        usGaap
+          ?.StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest
+          ?.units?.USD ||
+        [];
+
+      // Cash flow operativo
+      const cashFlowOperativo =
+        usGaap?.NetCashProvidedByUsedInOperatingActivities?.units?.USD || [];
+
+      // CapEx (spese in conto capitale)
+      const capex =
+        usGaap?.PaymentsToAcquirePropertyPlantAndEquipment?.units?.USD || [];
+
+      callback(null, {
+        ricavi,
+        utile,
+        assets,
+        patrimonioNetto,
+        cashFlowOperativo,
+        capex,
+      });
     });
   });
 
