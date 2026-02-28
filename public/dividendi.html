@@ -55,7 +55,6 @@
         margin-bottom: 36px;
         font-family: "IBM Plex Mono", monospace;
       }
-
       .search-box {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -73,24 +72,43 @@
       }
       .search-row {
         display: flex;
-        gap: 10px;
-        align-items: center;
+        gap: 12px;
+        align-items: flex-end;
+        flex-wrap: wrap;
       }
-      .search-row input {
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .field input {
         background: var(--surface2);
         border: 1px solid var(--border);
         color: var(--text);
         padding: 10px 14px;
         border-radius: 6px;
         font-size: 14px;
-        width: 300px;
         transition: border-color 0.2s;
       }
-      .search-row input:focus {
+      .field input[type="text"] {
+        width: 180px;
+      }
+      .field input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(0.5);
+        cursor: pointer;
+      }
+      .field input:focus {
         outline: none;
         border-color: var(--accent);
       }
-      .search-row input::placeholder {
+      .field input::placeholder {
         color: var(--text-muted);
       }
       .btn-find {
@@ -108,7 +126,6 @@
       .btn-find:hover {
         background: rgba(16, 185, 129, 0.08);
       }
-
       .result-panel {
         margin-top: 14px;
         padding: 14px;
@@ -120,7 +137,6 @@
       .result-panel.visible {
         display: block;
       }
-
       .status-bar {
         display: flex;
         align-items: center;
@@ -155,16 +171,15 @@
           opacity: 0.3;
         }
       }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-      }
       .table-wrap {
         border: 1px solid var(--border);
         border-radius: 8px;
         overflow: hidden;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
       }
       thead tr {
         background: var(--surface2);
@@ -202,20 +217,35 @@
   </head>
   <body>
     <script src="/navbar.js"></script>
-
     <h1>Dividendi <span>Calendar</span></h1>
     <p class="subtitle">
-      // storico e prossimi dividendi · fonte: Alpha Vantage
+      // storico dividendi per azienda e intervallo date · fonte: Alpha Vantage
     </p>
-
     <div class="search-box">
-      <h3>// Cerca azienda</h3>
+      <h3>// Cerca dividendi</h3>
       <div class="search-row">
-        <input
-          type="text"
-          id="input-ticker"
-          placeholder="es. AAPL, MSFT, JNJ..."
-        />
+        <div class="field">
+          <label>Ticker</label>
+          <input
+            type="text"
+            id="input-ticker"
+            placeholder="es. AAPL, MSFT..."
+          />
+        </div>
+        <div class="field">
+          <label>Data inizio</label>
+          <input
+            type="date"
+            id="data-inizio"
+          />
+        </div>
+        <div class="field">
+          <label>Data fine</label>
+          <input
+            type="date"
+            id="data-fine"
+          />
+        </div>
         <button
           class="btn-find"
           onclick="cercaDividendi()"
@@ -228,7 +258,6 @@
         id="result-panel"
       ></div>
     </div>
-
     <div class="status-bar">
       <div
         class="dot"
@@ -236,11 +265,20 @@
       ></div>
       <span id="status-text">Inserisci un ticker per vedere i dividendi</span>
     </div>
-
     <div id="risultati"></div>
-
     <script>
       const API_KEY = "6UCUC5N71W0X8L7D";
+
+      // Date default: ultimi 2 anni
+      const oggi = new Date();
+      const due_anni_fa = new Date();
+      due_anni_fa.setFullYear(oggi.getFullYear() - 2);
+      document.getElementById("data-inizio").value = due_anni_fa
+        .toISOString()
+        .split("T")[0];
+      document.getElementById("data-fine").value = oggi
+        .toISOString()
+        .split("T")[0];
 
       document
         .getElementById("input-ticker")
@@ -263,6 +301,8 @@
           .getElementById("input-ticker")
           .value.trim()
           .toUpperCase();
+        const dataInizio = document.getElementById("data-inizio").value;
+        const dataFine = document.getElementById("data-fine").value;
         if (!ticker) return;
 
         setStatus("loading", `Caricamento dividendi per ${ticker}...`);
@@ -273,11 +313,23 @@
             `https://www.alphavantage.co/query?function=DIVIDENDS&symbol=${ticker}&apikey=${API_KEY}`,
           );
           const data = await res.json();
+          let dividendi = data.data || [];
 
-          const dividendi = data.data || [];
+          // Filtra per date se specificate
+          if (dataInizio)
+            dividendi = dividendi.filter(
+              (d) => d.ex_dividend_date >= dataInizio,
+            );
+          if (dataFine)
+            dividendi = dividendi.filter((d) => d.ex_dividend_date <= dataFine);
 
           if (dividendi.length === 0) {
-            setStatus("error", "Nessun dividendo trovato per " + ticker);
+            setStatus(
+              "error",
+              "Nessun dividendo trovato per " +
+                ticker +
+                " nel periodo selezionato",
+            );
             return;
           }
 
@@ -286,45 +338,33 @@
             `${dividendi.length} dividendi trovati per ${ticker}`,
           );
 
-          // Mostra info riassuntiva
           const panel = document.getElementById("result-panel");
           const ultimo = dividendi[0];
           panel.className = "result-panel visible";
           panel.innerHTML = `
             <div style="font-weight:600; font-size:15px; margin-bottom:6px;">${ticker}</div>
             <div style="font-size:13px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace;">
-              Ultimo dividendo: <strong style="color:var(--accent)">${ultimo.amount ? "$" + parseFloat(ultimo.amount).toFixed(4) : "N/D"}</strong>
+              Ultimo dividendo nel periodo: <strong style="color:var(--accent)">${ultimo.amount ? "$" + parseFloat(ultimo.amount).toFixed(4) : "N/D"}</strong>
               · Ex-date: ${formatDateIT(ultimo.ex_dividend_date)}
               · Payment: ${formatDateIT(ultimo.payment_date)}
             </div>
           `;
 
-          // Tabella completa
           let html = `
             <div class="table-wrap">
               <table>
-                <thead>
-                  <tr>
-                    <th>Ex-Dividend Date</th>
-                    <th>Declaration Date</th>
-                    <th>Record Date</th>
-                    <th>Payment Date</th>
-                    <th>Importo</th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Ex-Dividend Date</th><th>Declaration Date</th><th>Record Date</th><th>Payment Date</th><th>Importo</th></tr></thead>
                 <tbody>
           `;
 
-          dividendi.slice(0, 20).forEach((d) => {
-            html += `
-              <tr>
-                <td class="mono">${formatDateIT(d.ex_dividend_date)}</td>
-                <td class="mono dim">${formatDateIT(d.declaration_date)}</td>
-                <td class="mono dim">${formatDateIT(d.record_date)}</td>
-                <td class="mono dim">${formatDateIT(d.payment_date)}</td>
-                <td class="mono green">$${d.amount ? parseFloat(d.amount).toFixed(4) : "N/D"}</td>
-              </tr>
-            `;
+          dividendi.forEach((d) => {
+            html += `<tr>
+              <td class="mono">${formatDateIT(d.ex_dividend_date)}</td>
+              <td class="mono dim">${formatDateIT(d.declaration_date)}</td>
+              <td class="mono dim">${formatDateIT(d.record_date)}</td>
+              <td class="mono dim">${formatDateIT(d.payment_date)}</td>
+              <td class="mono green">$${d.amount ? parseFloat(d.amount).toFixed(4) : "N/D"}</td>
+            </tr>`;
           });
 
           html += `</tbody></table></div>`;

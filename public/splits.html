@@ -55,7 +55,6 @@
         margin-bottom: 36px;
         font-family: "IBM Plex Mono", monospace;
       }
-
       .search-box {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -73,24 +72,43 @@
       }
       .search-row {
         display: flex;
-        gap: 10px;
-        align-items: center;
+        gap: 12px;
+        align-items: flex-end;
+        flex-wrap: wrap;
       }
-      .search-row input {
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .field input {
         background: var(--surface2);
         border: 1px solid var(--border);
         color: var(--text);
         padding: 10px 14px;
         border-radius: 6px;
         font-size: 14px;
-        width: 300px;
         transition: border-color 0.2s;
       }
-      .search-row input:focus {
+      .field input[type="text"] {
+        width: 180px;
+      }
+      .field input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(0.5);
+        cursor: pointer;
+      }
+      .field input:focus {
         outline: none;
         border-color: var(--accent);
       }
-      .search-row input::placeholder {
+      .field input::placeholder {
         color: var(--text-muted);
       }
       .btn-find {
@@ -108,7 +126,6 @@
       .btn-find:hover {
         background: rgba(245, 158, 11, 0.08);
       }
-
       .result-panel {
         margin-top: 14px;
         padding: 14px;
@@ -120,7 +137,6 @@
       .result-panel.visible {
         display: block;
       }
-
       .status-bar {
         display: flex;
         align-items: center;
@@ -155,7 +171,6 @@
           opacity: 0.3;
         }
       }
-
       .table-wrap {
         border: 1px solid var(--border);
         border-radius: 8px;
@@ -205,20 +220,35 @@
   </head>
   <body>
     <script src="/navbar.js"></script>
-
     <h1>Stock <span>Splits</span></h1>
     <p class="subtitle">
       // storico frazionamenti azionari · fonte: Alpha Vantage
     </p>
-
     <div class="search-box">
-      <h3>// Cerca azienda</h3>
+      <h3>// Cerca splits</h3>
       <div class="search-row">
-        <input
-          type="text"
-          id="input-ticker"
-          placeholder="es. AAPL, TSLA, NVDA..."
-        />
+        <div class="field">
+          <label>Ticker</label>
+          <input
+            type="text"
+            id="input-ticker"
+            placeholder="es. AAPL, TSLA..."
+          />
+        </div>
+        <div class="field">
+          <label>Data inizio</label>
+          <input
+            type="date"
+            id="data-inizio"
+          />
+        </div>
+        <div class="field">
+          <label>Data fine</label>
+          <input
+            type="date"
+            id="data-fine"
+          />
+        </div>
         <button
           class="btn-find"
           onclick="cercaSplits()"
@@ -231,7 +261,6 @@
         id="result-panel"
       ></div>
     </div>
-
     <div class="status-bar">
       <div
         class="dot"
@@ -239,11 +268,19 @@
       ></div>
       <span id="status-text">Inserisci un ticker per vedere gli splits</span>
     </div>
-
     <div id="risultati"></div>
-
     <script>
       const API_KEY = "6UCUC5N71W0X8L7D";
+
+      const oggi = new Date();
+      const dieci_anni_fa = new Date();
+      dieci_anni_fa.setFullYear(oggi.getFullYear() - 10);
+      document.getElementById("data-inizio").value = dieci_anni_fa
+        .toISOString()
+        .split("T")[0];
+      document.getElementById("data-fine").value = oggi
+        .toISOString()
+        .split("T")[0];
 
       document
         .getElementById("input-ticker")
@@ -266,6 +303,8 @@
           .getElementById("input-ticker")
           .value.trim()
           .toUpperCase();
+        const dataInizio = document.getElementById("data-inizio").value;
+        const dataFine = document.getElementById("data-fine").value;
         if (!ticker) return;
 
         setStatus("loading", `Caricamento splits per ${ticker}...`);
@@ -277,48 +316,49 @@
             `https://www.alphavantage.co/query?function=SPLITS&symbol=${ticker}&apikey=${API_KEY}`,
           );
           const data = await res.json();
+          let splits = data.data || [];
 
-          const splits = data.data || [];
+          if (dataInizio)
+            splits = splits.filter((s) => s.effective_date >= dataInizio);
+          if (dataFine)
+            splits = splits.filter((s) => s.effective_date <= dataFine);
 
           if (splits.length === 0) {
-            setStatus("error", "Nessuno split trovato per " + ticker);
+            setStatus(
+              "error",
+              "Nessuno split trovato per " +
+                ticker +
+                " nel periodo selezionato",
+            );
             document.getElementById("risultati").innerHTML =
-              `<div style="color:var(--text-dim);font-family:'IBM Plex Mono',monospace;padding:40px 0;text-align:center;">Nessuno split registrato per ${ticker}</div>`;
+              `<div style="color:var(--text-dim);font-family:'IBM Plex Mono',monospace;padding:40px 0;text-align:center;">Nessuno split registrato per ${ticker} nel periodo selezionato</div>`;
             return;
           }
 
           setStatus("ready", `${splits.length} splits trovati per ${ticker}`);
 
-          const ultimo = splits[0];
           const panel = document.getElementById("result-panel");
           panel.className = "result-panel visible";
           panel.innerHTML = `
             <div style="font-weight:600; font-size:15px; margin-bottom:6px;">${ticker}</div>
             <div style="font-size:13px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace;">
-              Ultimo split: <strong style="color:var(--accent)">${ultimo.split_factor}</strong>
-              · Data: ${formatDateIT(ultimo.effective_date)}
+              Ultimo split nel periodo: <strong style="color:var(--accent)">${splits[0].split_factor}</strong>
+              · Data: ${formatDateIT(splits[0].effective_date)}
             </div>
           `;
 
           let html = `
             <div class="table-wrap">
               <table>
-                <thead>
-                  <tr>
-                    <th>Data Effettiva</th>
-                    <th>Rapporto Split</th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Data Effettiva</th><th>Rapporto Split</th></tr></thead>
                 <tbody>
           `;
 
           splits.forEach((s) => {
-            html += `
-              <tr>
-                <td class="mono">${formatDateIT(s.effective_date)}</td>
-                <td><span class="split-badge">${s.split_factor}</span></td>
-              </tr>
-            `;
+            html += `<tr>
+              <td class="mono">${formatDateIT(s.effective_date)}</td>
+              <td><span class="split-badge">${s.split_factor}</span></td>
+            </tr>`;
           });
 
           html += `</tbody></table></div>`;

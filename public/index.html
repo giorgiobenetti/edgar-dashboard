@@ -3,37 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <title>Edgar Dashboard</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
     <style>
       body {
         font-family: sans-serif;
         max-width: 1100px;
-        margin: 40px auto;
-        padding: 0 20px;
+        margin: 0 auto;
+        padding: 32px 20px;
       }
       h1 {
         color: #333;
-      }
-
-      .top-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-      }
-
-      .btn-calendario {
-        display: inline-block;
-        padding: 8px 16px;
-        background: #3b82f6;
-        color: white;
-        text-decoration: none;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 600;
-      }
-
-      .btn-calendario:hover {
-        background: #2563eb;
+        margin-bottom: 16px;
       }
 
       #ricerca {
@@ -86,14 +73,9 @@
     </style>
   </head>
   <body>
-    <div class="top-bar">
-      <h1>Dashboard Aziende USA</h1>
-      <a
-        href="/calendario.html"
-        class="btn-calendario"
-        >📅 Calendario Trimestrali</a
-      >
-    </div>
+    <script src="/navbar.js"></script>
+
+    <h1>Dashboard Aziende USA</h1>
 
     <input
       type="text"
@@ -118,6 +100,6 @@
       <button id="btn-successivo">Successivo →</button>
     </div>
 
-    <script src="app.js"></script>
+    <script src="/app.js"></script>
   </body>
 </html>

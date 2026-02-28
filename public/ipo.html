@@ -56,19 +56,59 @@
         margin-bottom: 36px;
         font-family: "IBM Plex Mono", monospace;
       }
-
+      .controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 28px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .field input {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+      }
+      .field input[type="text"] {
+        width: 220px;
+      }
+      .field input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(0.5);
+        cursor: pointer;
+      }
+      .field input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .field input::placeholder {
+        color: var(--text-muted);
+      }
       .btn-load {
         background: var(--accent);
         color: #000;
         border: none;
-        padding: 10px 28px;
+        padding: 10px 24px;
         border-radius: 6px;
         font-size: 14px;
         font-weight: 600;
         cursor: pointer;
         font-family: "IBM Plex Mono", monospace;
         transition: opacity 0.2s;
-        margin-bottom: 28px;
       }
       .btn-load:hover {
         opacity: 0.85;
@@ -77,7 +117,6 @@
         opacity: 0.4;
         cursor: not-allowed;
       }
-
       .status-bar {
         display: flex;
         align-items: center;
@@ -112,7 +151,6 @@
           opacity: 0.3;
         }
       }
-
       .table-wrap {
         border: 1px solid var(--border);
         border-radius: 8px;
@@ -177,19 +215,42 @@
   </head>
   <body>
     <script src="/navbar.js"></script>
-
     <h1>IPO <span>Calendar</span></h1>
     <p class="subtitle">
       // quotazioni in arrivo e recenti · fonte: Alpha Vantage
     </p>
 
-    <button
-      class="btn-load"
-      id="btn-load"
-      onclick="caricaIPO()"
-    >
-      CARICA IPO
-    </button>
+    <div class="controls">
+      <div class="field">
+        <label>Data inizio</label>
+        <input
+          type="date"
+          id="data-inizio"
+        />
+      </div>
+      <div class="field">
+        <label>Data fine</label>
+        <input
+          type="date"
+          id="data-fine"
+        />
+      </div>
+      <div class="field">
+        <label>Filtra per nome</label>
+        <input
+          type="text"
+          id="filtro-nome"
+          placeholder="es. Tech, Bank..."
+        />
+      </div>
+      <button
+        class="btn-load"
+        id="btn-load"
+        onclick="caricaIPO()"
+      >
+        CARICA
+      </button>
+    </div>
 
     <div class="status-bar">
       <div
@@ -197,7 +258,7 @@
         id="status-dot"
       ></div>
       <span id="status-text"
-        >Clicca CARICA IPO per vedere le prossime quotazioni</span
+        >Seleziona un intervallo di date e clicca CARICA</span
       >
     </div>
 
@@ -205,6 +266,16 @@
 
     <script>
       const API_KEY = "6UCUC5N71W0X8L7D";
+
+      const oggi = new Date();
+      const tra3mesi = new Date();
+      tra3mesi.setMonth(oggi.getMonth() + 3);
+      document.getElementById("data-inizio").value = oggi
+        .toISOString()
+        .split("T")[0];
+      document.getElementById("data-fine").value = tra3mesi
+        .toISOString()
+        .split("T")[0];
 
       function formatDateIT(dateStr) {
         if (!dateStr || dateStr === "None" || dateStr === "-") return "—";
@@ -217,6 +288,13 @@
       }
 
       async function caricaIPO() {
+        const dataInizio = document.getElementById("data-inizio").value;
+        const dataFine = document.getElementById("data-fine").value;
+        const filtroNome = document
+          .getElementById("filtro-nome")
+          .value.toLowerCase()
+          .trim();
+
         setStatus("loading", "Caricamento IPO calendar...");
         document.getElementById("btn-load").disabled = true;
         document.getElementById("risultati").innerHTML = "";
@@ -234,7 +312,7 @@
           }
 
           const headers = righe[0].split(",").map((h) => h.trim());
-          const ipo = righe
+          let ipo = righe
             .slice(1)
             .map((riga) => {
               const valori = riga.split(",");
@@ -246,22 +324,33 @@
             })
             .filter((r) => r.symbol);
 
+          // Filtra per date
+          if (dataInizio) ipo = ipo.filter((r) => r.ipoDate >= dataInizio);
+          if (dataFine) ipo = ipo.filter((r) => r.ipoDate <= dataFine);
+
+          // Filtra per nome
+          if (filtroNome)
+            ipo = ipo.filter(
+              (r) =>
+                (r.name || "").toLowerCase().includes(filtroNome) ||
+                (r.symbol || "").toLowerCase().includes(filtroNome),
+            );
+
+          ipo.sort((a, b) => a.ipoDate.localeCompare(b.ipoDate));
+
+          if (ipo.length === 0) {
+            document.getElementById("risultati").innerHTML =
+              `<div style="color:var(--text-dim);font-family:'IBM Plex Mono',monospace;padding:40px 0;text-align:center;">Nessuna IPO trovata per il periodo selezionato</div>`;
+            setStatus("ready", "Nessun risultato");
+            return;
+          }
+
           setStatus("ready", `${ipo.length} IPO trovate`);
 
           let html = `
             <div class="table-wrap">
               <table>
-                <thead>
-                  <tr>
-                    <th>Ticker</th>
-                    <th>Azienda</th>
-                    <th>Data IPO</th>
-                    <th>Borsa</th>
-                    <th>Prezzo stimato</th>
-                    <th>Shares</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Ticker</th><th>Azienda</th><th>Data IPO</th><th>Borsa</th><th>Prezzo stimato</th><th>Shares</th><th>Status</th></tr></thead>
                 <tbody>
           `;
 
@@ -278,18 +367,15 @@
                 : r.priceRangeLow
                   ? `$${r.priceRangeLow}`
                   : "N/D";
-
-            html += `
-              <tr>
-                <td class="ticker-cell">${r.symbol || "—"}</td>
-                <td>${r.name || "—"}</td>
-                <td class="mono">${formatDateIT(r.ipoDate)}</td>
-                <td class="mono" style="color:var(--text-dim)">${r.exchange || "—"}</td>
-                <td class="mono">${prezzo}</td>
-                <td class="mono" style="color:var(--text-dim)">${r.shares ? parseInt(r.shares).toLocaleString() : "N/D"}</td>
-                <td><span class="status-ipo ${statusClass}">${r.ipoType || "—"}</span></td>
-              </tr>
-            `;
+            html += `<tr>
+              <td class="ticker-cell">${r.symbol || "—"}</td>
+              <td>${r.name || "—"}</td>
+              <td class="mono">${formatDateIT(r.ipoDate)}</td>
+              <td class="mono" style="color:var(--text-dim)">${r.exchange || "—"}</td>
+              <td class="mono">${prezzo}</td>
+              <td class="mono" style="color:var(--text-dim)">${r.shares ? parseInt(r.shares).toLocaleString() : "N/D"}</td>
+              <td><span class="status-ipo ${statusClass}">${r.ipoType || "—"}</span></td>
+            </tr>`;
           });
 
           html += `</tbody></table></div>`;
