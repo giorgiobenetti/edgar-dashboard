@@ -3,7 +3,6 @@ let aziendeFiltrate = [];
 let paginaCorrente = 1;
 const aziendePerPagina = 50;
 
-// Carica i dati da Node
 async function caricaAziende() {
   try {
     const response = await fetch("/aziende");
@@ -18,7 +17,6 @@ async function caricaAziende() {
 
 caricaAziende();
 
-// Ricerca
 document.getElementById("ricerca").addEventListener("input", function () {
   const testo = this.value.toLowerCase();
   aziendeFiltrate = tutteLeAziende.filter(function (azienda) {
@@ -30,7 +28,6 @@ document.getElementById("ricerca").addEventListener("input", function () {
   mostraPagina(1);
 });
 
-// Paginazione
 document
   .getElementById("btn-precedente")
   .addEventListener("click", function () {
@@ -44,7 +41,6 @@ document
     if (paginaCorrente < totalePagine) mostraPagina(paginaCorrente + 1);
   });
 
-// Funzione principale
 function mostraPagina(pagina) {
   paginaCorrente = pagina;
   const inizio = (pagina - 1) * aziendePerPagina;
@@ -57,11 +53,10 @@ function mostraPagina(pagina) {
   aziendeDaMostrare.forEach(function (azienda) {
     const riga = document.createElement("tr");
     riga.innerHTML = `
-  <td><a href="/azienda/${azienda.cik_str}">${azienda.title}</a></td>
-  <td>${azienda.ticker}</td>
-  <td>${azienda.cik_str}</td>
-`;
-
+      <td><a href="/azienda/${azienda.cik_str}">${azienda.title}</a></td>
+      <td class="ticker-cell">${azienda.ticker}</td>
+      <td class="cik-cell">${azienda.cik_str}</td>
+    `;
     tbody.appendChild(riga);
   });
 
