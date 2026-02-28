@@ -578,7 +578,7 @@
 
       // ─── Render tutti i prospetti ─────────────────────────
       function renderTutti(dati) {
-        const usGaap = dati.facts["us-gaap"] || {};
+        const usGaap = dati.facts.facts["us-gaap"] || {};
         const isAnnuale = periodoCorrente === "annual";
 
         const filing = estraiFiling(usGaap, isAnnuale);
