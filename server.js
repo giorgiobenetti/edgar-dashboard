@@ -66,7 +66,34 @@ app.get("/api/ticker/:ticker", function (req, res) {
   });
 });
 
-// ─── Scarica company facts EDGAR ─────────────────────────
+// ─── Debug: lista tag us-gaap disponibili ────────────────
+app.get("/api/edgar/tags/:cik", function (req, res) {
+  const cik = String(req.params.cik).padStart(10, "0");
+  edgar.getCompanyFacts(cik, function (err, data) {
+    if (err) {
+      res.status(500).json({ errore: err.message });
+      return;
+    }
+    const usGaap = data.facts["us-gaap"] || {};
+    const tags = Object.keys(usGaap).sort();
+    // Filtra solo i tag che potrebbero essere ricavi/utile/cash
+    const keywords = [
+      "revenue",
+      "income",
+      "cash",
+      "profit",
+      "earning",
+      "sales",
+      "loss",
+      "flow",
+    ];
+    const rilevanti = tags.filter((t) =>
+      keywords.some((k) => t.toLowerCase().includes(k)),
+    );
+    res.json({ tutti: tags.length, rilevanti });
+  });
+});
+
 app.get("/api/edgar/facts/:cik", function (req, res) {
   const cik = String(req.params.cik).padStart(10, "0");
   edgar.getCompanyFacts(cik, function (err, data) {
