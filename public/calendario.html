@@ -7,16 +7,21 @@
       content="width=device-width, initial-scale=1.0"
     />
     <title>Calendario Trimestrali</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap");
-
       :root {
         --bg: #0a0e17;
         --surface: #111827;
         --surface2: #1a2235;
         --border: #1f2d45;
         --accent: #00d4ff;
-        --accent2: #7c3aed;
         --green: #10b981;
         --red: #ef4444;
         --text: #e2e8f0;
@@ -38,39 +43,12 @@
         padding: 32px 24px;
       }
 
-      /* Header */
-      .top-nav {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 40px;
-      }
-
-      .top-nav a {
-        color: var(--text-dim);
-        text-decoration: none;
-        font-size: 13px;
-        font-family: "IBM Plex Mono", monospace;
-        letter-spacing: 0.05em;
-        transition: color 0.2s;
-      }
-
-      .top-nav a:hover {
-        color: var(--accent);
-      }
-
-      .top-nav span {
-        color: var(--text-muted);
-        font-size: 13px;
-      }
-
       h1 {
         font-size: 32px;
         font-weight: 300;
         letter-spacing: -0.02em;
         margin-bottom: 4px;
       }
-
       h1 span {
         color: var(--accent);
         font-weight: 600;
@@ -83,7 +61,6 @@
         font-family: "IBM Plex Mono", monospace;
       }
 
-      /* Pannello controlli */
       .controls {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr auto;
@@ -122,7 +99,6 @@
         outline: none;
         border-color: var(--accent);
       }
-
       .field input[type="date"]::-webkit-calendar-picker-indicator {
         filter: invert(0.5);
         cursor: pointer;
@@ -151,7 +127,6 @@
         cursor: not-allowed;
       }
 
-      /* Sezione ricerca singola azienda */
       .search-company {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -191,7 +166,6 @@
         outline: none;
         border-color: var(--accent);
       }
-
       .search-row input::placeholder {
         color: var(--text-muted);
       }
@@ -225,20 +199,17 @@
       .company-result.visible {
         display: block;
       }
-
       .company-result .cr-name {
         font-weight: 600;
         font-size: 15px;
         margin-bottom: 6px;
       }
-
       .company-result .cr-detail {
         font-size: 13px;
         color: var(--text-dim);
         font-family: "IBM Plex Mono", monospace;
       }
 
-      /* Stato */
       .status-bar {
         display: flex;
         align-items: center;
@@ -255,12 +226,10 @@
         border-radius: 50%;
         background: var(--text-muted);
       }
-
       .dot.loading {
         background: var(--accent);
         animation: pulse 1s infinite;
       }
-
       .dot.ready {
         background: var(--green);
       }
@@ -278,11 +247,9 @@
         }
       }
 
-      /* Tabella risultati */
       .results-header {
         display: grid;
         grid-template-columns: 100px 1fr 140px 100px 120px;
-        gap: 0;
         padding: 10px 16px;
         background: var(--surface2);
         border-radius: 6px 6px 0 0;
@@ -304,7 +271,6 @@
       .result-row {
         display: grid;
         grid-template-columns: 100px 1fr 140px 100px 120px;
-        gap: 0;
         padding: 12px 16px;
         border-bottom: 1px solid var(--border);
         transition: background 0.15s;
@@ -324,31 +290,30 @@
         font-size: 14px;
         color: var(--accent);
       }
-
       .result-row .company-name {
         font-size: 14px;
         color: var(--text);
       }
-
       .result-row .date {
         font-family: "IBM Plex Mono", monospace;
         font-size: 13px;
         color: var(--text);
       }
 
-      .result-row .estimate {
+      .estimate.positive {
+        color: var(--green);
         font-family: "IBM Plex Mono", monospace;
         font-size: 13px;
       }
-
-      .estimate.positive {
-        color: var(--green);
-      }
       .estimate.negative {
         color: var(--red);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
       }
       .estimate.neutral {
         color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
       }
 
       .timing-badge {
@@ -373,7 +338,6 @@
         color: var(--text-muted);
       }
 
-      /* Raggruppamento per data */
       .date-group-header {
         padding: 10px 16px;
         background: var(--surface2);
@@ -405,18 +369,13 @@
     </style>
   </head>
   <body>
-    <div class="top-nav">
-      <a href="/">← dashboard</a>
-      <span>/</span>
-      <span style="color: var(--text-dim)">calendario trimestrali</span>
-    </div>
+    <script src="/navbar.js"></script>
 
     <h1>Earnings <span>Calendar</span></h1>
     <p class="subtitle">
       // date di pubblicazione trimestrali · fonte: Alpha Vantage
     </p>
 
-    <!-- Ricerca singola azienda -->
     <div class="search-company">
       <h3>// Cerca azienda</h3>
       <div class="search-row">
@@ -438,7 +397,6 @@
       ></div>
     </div>
 
-    <!-- Controlli calendario -->
     <div class="controls">
       <div class="field">
         <label>Data inizio</label>
@@ -471,7 +429,6 @@
       </button>
     </div>
 
-    <!-- Status -->
     <div class="status-bar">
       <div
         class="dot"
@@ -487,14 +444,11 @@
       ></span>
     </div>
 
-    <!-- Risultati -->
     <div id="risultati"></div>
 
     <script>
-      // ⚠️ SOSTITUISCI CON LA TUA NUOVA API KEY
-      const API_KEY = "LA_TUA_NUOVA_API_KEY";
+      const API_KEY = "6UCUC5N71W0X8L7D";
 
-      // Imposta date di default: oggi + 30 giorni
       const oggi = new Date();
       const tra30 = new Date();
       tra30.setDate(oggi.getDate() + 30);
@@ -506,7 +460,15 @@
         return d.toISOString().split("T")[0];
       }
 
-      // ─── Carica calendario per intervallo date ───────────
+      function formatDateIT(dateStr) {
+        const d = new Date(dateStr + "T12:00:00");
+        return d.toLocaleDateString("it-IT", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+      }
+
       async function caricaCalendario() {
         const dataInizio = document.getElementById("data-inizio").value;
         const dataFine = document.getElementById("data-fine").value;
@@ -519,7 +481,6 @@
           setStatus("error", "Seleziona entrambe le date");
           return;
         }
-
         if (dataFine < dataInizio) {
           setStatus(
             "error",
@@ -534,19 +495,15 @@
         document.getElementById("count-badge").style.display = "none";
 
         try {
-          // Alpha Vantage restituisce CSV — lo parsiamo manualmente
           const url = `https://www.alphavantage.co/query?function=EARNINGS_CALENDAR&horizon=12month&apikey=${API_KEY}`;
           const response = await fetch(url);
           const csv = await response.text();
-
           const righe = parseCSV(csv);
 
-          // Filtra per intervallo date
-          let filtrate = righe.filter((r) => {
-            return r.reportDate >= dataInizio && r.reportDate <= dataFine;
-          });
+          let filtrate = righe.filter(
+            (r) => r.reportDate >= dataInizio && r.reportDate <= dataFine,
+          );
 
-          // Filtra per nome se specificato
           if (filtroNome) {
             filtrate = filtrate.filter(
               (r) =>
@@ -555,13 +512,11 @@
             );
           }
 
-          // Ordina per data
           filtrate.sort((a, b) => a.reportDate.localeCompare(b.reportDate));
 
           if (filtrate.length === 0) {
-            document.getElementById("risultati").innerHTML = `
-            <div class="empty-state">Nessuna trimestrale trovata per l'intervallo selezionato</div>
-          `;
+            document.getElementById("risultati").innerHTML =
+              `<div class="empty-state">Nessuna trimestrale trovata per l'intervallo selezionato</div>`;
             setStatus("ready", "Ricerca completata");
           } else {
             renderCalendario(filtrate);
@@ -577,7 +532,6 @@
         document.getElementById("btn-carica").disabled = false;
       }
 
-      // ─── Cerca singola azienda ───────────────────────────
       async function cercaAzienda() {
         const ticker = document
           .getElementById("input-ticker")
@@ -600,7 +554,6 @@
             return;
           }
 
-          // Prendi la prossima data
           const prossima = righe
             .filter((r) => r.reportDate >= formatDate(new Date()))
             .sort((a, b) => a.reportDate.localeCompare(b.reportDate))[0];
@@ -616,22 +569,20 @@
             const stima = prossima.estimate
               ? `EPS stimato: <strong style="color:${parseFloat(prossima.estimate) >= 0 ? "var(--green)" : "var(--red)"}">${parseFloat(prossima.estimate).toFixed(2)}</strong>`
               : "EPS stimato: N/D";
-
             const timing = prossima.timeOfDay ? `· ${prossima.timeOfDay}` : "";
 
             html += `<div class="cr-detail">
-            Prossima trimestrale: <strong style="color:var(--accent)">${prossima.reportDate}</strong>
-            ${timing} · Fine periodo fiscale: ${prossima.fiscalDateEnding} · ${stima}
-          </div>`;
+              Prossima trimestrale: <strong style="color:var(--accent)">${formatDateIT(prossima.reportDate)}</strong>
+              ${timing} · Fine periodo fiscale: ${prossima.fiscalDateEnding} · ${stima}
+            </div>`;
           } else {
             html += `<div class="cr-detail" style="color: var(--text-dim)">Nessuna trimestrale programmata nei prossimi 12 mesi</div>`;
           }
 
-          // Mostra tutte le date disponibili
           if (tutte.length > 1) {
             html += `<div class="cr-detail" style="margin-top:8px; color: var(--text-muted)">
-            Tutte le date: ${tutte.map((r) => r.reportDate).join(" · ")}
-          </div>`;
+              Tutte le date: ${tutte.map((r) => formatDateIT(r.reportDate)).join(" · ")}
+            </div>`;
           }
 
           resultDiv.innerHTML = html;
@@ -640,18 +591,14 @@
         }
       }
 
-      // Tasto invio su campo ticker
       document
         .getElementById("input-ticker")
         .addEventListener("keydown", function (e) {
           if (e.key === "Enter") cercaAzienda();
         });
 
-      // ─── Render calendario raggruppato per data ──────────
       function renderCalendario(righe) {
         const container = document.getElementById("risultati");
-
-        // Raggruppa per data
         const gruppi = {};
         righe.forEach((r) => {
           if (!gruppi[r.reportDate]) gruppi[r.reportDate] = [];
@@ -659,15 +606,11 @@
         });
 
         let html = `
-        <div class="results-header">
-          <div>Ticker</div>
-          <div>Azienda</div>
-          <div>Data</div>
-          <div>EPS stimato</div>
-          <div>Orario</div>
-        </div>
-        <div class="results-body">
-      `;
+          <div class="results-header">
+            <div>Ticker</div><div>Azienda</div><div>Data</div><div>EPS stimato</div><div>Orario</div>
+          </div>
+          <div class="results-body">
+        `;
 
         Object.keys(gruppi)
           .sort()
@@ -694,7 +637,6 @@
               const estTxt = isNaN(est)
                 ? "N/D"
                 : (est >= 0 ? "+" : "") + est.toFixed(2);
-
               const tod = (r.timeOfDay || "").toLowerCase();
               const timingClass = tod.includes("pre")
                 ? "pre"
@@ -708,14 +650,14 @@
                   : "—";
 
               html += `
-            <div class="result-row">
-              <div class="ticker">${r.symbol}</div>
-              <div class="company-name">${r.name}</div>
-              <div class="date">${formatDateIT(r.reportDate)}</div>
-              <div class="estimate ${estClass}">${estTxt}</div>
-              <div><span class="timing-badge ${timingClass}">${timingLabel}</span></div>
-            </div>
-          `;
+              <div class="result-row">
+                <div class="ticker">${r.symbol}</div>
+                <div class="company-name">${r.name}</div>
+                <div class="date">${formatDateIT(r.reportDate)}</div>
+                <div class="estimate ${estClass}">${estTxt}</div>
+                <div><span class="timing-badge ${timingClass}">${timingLabel}</span></div>
+              </div>
+            `;
             });
           });
 
@@ -723,24 +665,10 @@
         container.innerHTML = html;
       }
 
-      // ─── Formatta data in italiano ───────────────────────
-      function formatDateIT(dateStr) {
-        const d = new Date(dateStr + "T12:00:00");
-        return d.toLocaleDateString("it-IT", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        });
-      }
-
-      // ─── Parser CSV ──────────────────────────────────────
       function parseCSV(csv) {
         const righe = csv.trim().split("\n");
         if (righe.length < 2) return [];
-
-        // Prima riga = intestazioni
         const headers = righe[0].split(",");
-
         return righe
           .slice(1)
           .map((riga) => {
@@ -761,12 +689,9 @@
           .filter((r) => r.symbol && r.reportDate);
       }
 
-      // ─── Helper stato ────────────────────────────────────
       function setStatus(tipo, testo) {
-        const dot = document.getElementById("status-dot");
-        const txt = document.getElementById("status-text");
-        dot.className = "dot " + tipo;
-        txt.textContent = testo;
+        document.getElementById("status-dot").className = "dot " + tipo;
+        document.getElementById("status-text").textContent = testo;
       }
     </script>
   </body>

@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Calendario Dividendi</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0e17;
+        --surface: #111827;
+        --surface2: #1a2235;
+        --border: #1f2d45;
+        --accent: #10b981;
+        --red: #ef4444;
+        --text: #e2e8f0;
+        --text-dim: #64748b;
+        --text-muted: #334155;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "IBM Plex Sans", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 32px 24px;
+      }
+      h1 {
+        font-size: 32px;
+        font-weight: 300;
+        letter-spacing: -0.02em;
+        margin-bottom: 4px;
+      }
+      h1 span {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .subtitle {
+        color: var(--text-dim);
+        font-size: 14px;
+        margin-bottom: 36px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .search-box {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 32px;
+      }
+      .search-box h3 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        margin-bottom: 14px;
+      }
+      .search-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .search-row input {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        width: 300px;
+        transition: border-color 0.2s;
+      }
+      .search-row input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .search-row input::placeholder {
+        color: var(--text-muted);
+      }
+      .btn-find {
+        background: var(--surface2);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: "IBM Plex Mono", monospace;
+        transition: background 0.2s;
+      }
+      .btn-find:hover {
+        background: rgba(16, 185, 129, 0.08);
+      }
+
+      .result-panel {
+        margin-top: 14px;
+        padding: 14px;
+        background: var(--surface2);
+        border-radius: 6px;
+        border-left: 3px solid var(--accent);
+        display: none;
+      }
+      .result-panel.visible {
+        display: block;
+      }
+
+      .status-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+      }
+      .dot.loading {
+        background: var(--accent);
+        animation: pulse 1s infinite;
+      }
+      .dot.ready {
+        background: var(--accent);
+      }
+      .dot.error {
+        background: var(--red);
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      .table-wrap {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      thead tr {
+        background: var(--surface2);
+      }
+      th {
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:hover td {
+        background: var(--surface);
+      }
+      .mono {
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .green {
+        color: #10b981;
+      }
+      .dim {
+        color: var(--text-dim);
+      }
+    </style>
+  </head>
+  <body>
+    <script src="/navbar.js"></script>
+
+    <h1>Dividendi <span>Calendar</span></h1>
+    <p class="subtitle">
+      // storico e prossimi dividendi · fonte: Alpha Vantage
+    </p>
+
+    <div class="search-box">
+      <h3>// Cerca azienda</h3>
+      <div class="search-row">
+        <input
+          type="text"
+          id="input-ticker"
+          placeholder="es. AAPL, MSFT, JNJ..."
+        />
+        <button
+          class="btn-find"
+          onclick="cercaDividendi()"
+        >
+          CERCA
+        </button>
+      </div>
+      <div
+        class="result-panel"
+        id="result-panel"
+      ></div>
+    </div>
+
+    <div class="status-bar">
+      <div
+        class="dot"
+        id="status-dot"
+      ></div>
+      <span id="status-text">Inserisci un ticker per vedere i dividendi</span>
+    </div>
+
+    <div id="risultati"></div>
+
+    <script>
+      const API_KEY = "6UCUC5N71W0X8L7D";
+
+      document
+        .getElementById("input-ticker")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter") cercaDividendi();
+        });
+
+      function formatDateIT(dateStr) {
+        if (!dateStr || dateStr === "None") return "—";
+        const d = new Date(dateStr + "T12:00:00");
+        return d.toLocaleDateString("it-IT", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+      }
+
+      async function cercaDividendi() {
+        const ticker = document
+          .getElementById("input-ticker")
+          .value.trim()
+          .toUpperCase();
+        if (!ticker) return;
+
+        setStatus("loading", `Caricamento dividendi per ${ticker}...`);
+        document.getElementById("risultati").innerHTML = "";
+
+        try {
+          const res = await fetch(
+            `https://www.alphavantage.co/query?function=DIVIDENDS&symbol=${ticker}&apikey=${API_KEY}`,
+          );
+          const data = await res.json();
+
+          const dividendi = data.data || [];
+
+          if (dividendi.length === 0) {
+            setStatus("error", "Nessun dividendo trovato per " + ticker);
+            return;
+          }
+
+          setStatus(
+            "ready",
+            `${dividendi.length} dividendi trovati per ${ticker}`,
+          );
+
+          // Mostra info riassuntiva
+          const panel = document.getElementById("result-panel");
+          const ultimo = dividendi[0];
+          panel.className = "result-panel visible";
+          panel.innerHTML = `
+            <div style="font-weight:600; font-size:15px; margin-bottom:6px;">${ticker}</div>
+            <div style="font-size:13px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace;">
+              Ultimo dividendo: <strong style="color:var(--accent)">${ultimo.amount ? "$" + parseFloat(ultimo.amount).toFixed(4) : "N/D"}</strong>
+              · Ex-date: ${formatDateIT(ultimo.ex_dividend_date)}
+              · Payment: ${formatDateIT(ultimo.payment_date)}
+            </div>
+          `;
+
+          // Tabella completa
+          let html = `
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ex-Dividend Date</th>
+                    <th>Declaration Date</th>
+                    <th>Record Date</th>
+                    <th>Payment Date</th>
+                    <th>Importo</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+          dividendi.slice(0, 20).forEach((d) => {
+            html += `
+              <tr>
+                <td class="mono">${formatDateIT(d.ex_dividend_date)}</td>
+                <td class="mono dim">${formatDateIT(d.declaration_date)}</td>
+                <td class="mono dim">${formatDateIT(d.record_date)}</td>
+                <td class="mono dim">${formatDateIT(d.payment_date)}</td>
+                <td class="mono green">$${d.amount ? parseFloat(d.amount).toFixed(4) : "N/D"}</td>
+              </tr>
+            `;
+          });
+
+          html += `</tbody></table></div>`;
+          document.getElementById("risultati").innerHTML = html;
+        } catch (err) {
+          setStatus("error", "Errore: " + err.message);
+        }
+      }
+
+      function setStatus(tipo, testo) {
+        document.getElementById("status-dot").className = "dot " + tipo;
+        document.getElementById("status-text").textContent = testo;
+      }
+    </script>
+  </body>
+</html>
