@@ -61,10 +61,23 @@
         display: flex;
         gap: 12px;
         margin-bottom: 28px;
-        align-items: center;
+        align-items: flex-end;
         flex-wrap: wrap;
       }
-      .controls input {
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .field input[type="text"] {
         background: var(--surface);
         border: 1px solid var(--border);
         color: var(--text);
@@ -74,12 +87,36 @@
         width: 260px;
         transition: border-color 0.2s;
       }
-      .controls input:focus {
+      .field input[type="text"]:focus {
         outline: none;
         border-color: var(--accent);
       }
-      .controls input::placeholder {
+      .field input[type="text"]::placeholder {
         color: var(--text-muted);
+      }
+
+      /* Checkbox esatta corrispondenza */
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .checkbox-row input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--accent);
+        cursor: pointer;
+      }
+      .checkbox-row label {
+        font-size: 12px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        cursor: pointer;
+        user-select: none;
+      }
+      .checkbox-row label span {
+        color: var(--accent);
       }
 
       .toggle-group {
@@ -221,6 +258,12 @@
         background: rgba(239, 68, 68, 0.15);
         color: #f87171;
       }
+      .note {
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+        margin-top: 12px;
+      }
     </style>
   </head>
   <body>
@@ -232,27 +275,43 @@
     </p>
 
     <div class="controls">
-      <input
-        type="text"
-        id="filtro"
-        placeholder="Filtra per nome o ticker..."
-        oninput="filtraRisultati()"
-      />
-      <div class="toggle-group">
-        <button
-          class="tog attivo"
-          id="tog-active"
-          onclick="setStato('active')"
-        >
-          Attive
-        </button>
-        <button
-          class="tog"
-          id="tog-delisted"
-          onclick="setStato('delisted')"
-        >
-          Delistate
-        </button>
+      <div class="field">
+        <label>Cerca</label>
+        <input
+          type="text"
+          id="filtro"
+          placeholder="Ticker o nome azienda..."
+          oninput="filtraRisultati()"
+        />
+        <div class="checkbox-row">
+          <input
+            type="checkbox"
+            id="esatta"
+            onchange="filtraRisultati()"
+          />
+          <label for="esatta"
+            >Corrispondenza esatta su <span>ticker</span></label
+          >
+        </div>
+      </div>
+      <div class="field">
+        <label>Stato</label>
+        <div class="toggle-group">
+          <button
+            class="tog attivo"
+            id="tog-active"
+            onclick="setStato('active')"
+          >
+            Attive
+          </button>
+          <button
+            class="tog"
+            id="tog-delisted"
+            onclick="setStato('delisted')"
+          >
+            Delistate
+          </button>
+        </div>
       </div>
       <button
         class="btn-load"
@@ -326,7 +385,7 @@
             .filter((r) => r.symbol);
 
           setStatus("ready", `${tuttiDati.length} aziende caricate`);
-          renderTabella(tuttiDati);
+          filtraRisultati();
         } catch (err) {
           setStatus("error", "Errore: " + err.message);
         }
@@ -335,21 +394,35 @@
       }
 
       function filtraRisultati() {
-        const filtro = document
-          .getElementById("filtro")
-          .value.toLowerCase()
-          .trim();
         if (!tuttiDati.length) return;
-        const filtrati = filtro
-          ? tuttiDati.filter(
+
+        const filtro = document.getElementById("filtro").value.trim();
+        const esatta = document.getElementById("esatta").checked;
+
+        let filtrati = tuttiDati;
+
+        if (filtro) {
+          const filtroLower = filtro.toLowerCase();
+          if (esatta) {
+            // Corrispondenza esatta solo sul ticker (case insensitive)
+            filtrati = tuttiDati.filter(
+              (r) => r.symbol.toLowerCase() === filtroLower,
+            );
+          } else {
+            // Ricerca parziale su ticker e nome
+            filtrati = tuttiDati.filter(
               (r) =>
-                (r.symbol || "").toLowerCase().includes(filtro) ||
-                (r.name || "").toLowerCase().includes(filtro),
-            )
-          : tuttiDati;
-        renderTabella(filtrati.slice(0, 200));
-        document.getElementById("status-text").textContent =
-          `${filtrati.length} risultati`;
+                r.symbol.toLowerCase().includes(filtroLower) ||
+                (r.name || "").toLowerCase().includes(filtroLower),
+            );
+          }
+        }
+
+        document.getElementById("status-text").textContent = filtro
+          ? `${filtrati.length} risultati per "${filtro}"${esatta ? " (esatta)" : ""}`
+          : `${tuttiDati.length} aziende caricate`;
+
+        renderTabella(filtrati);
       }
 
       function renderTabella(dati) {
@@ -359,13 +432,9 @@
             <table>
               <thead>
                 <tr>
-                  <th>Ticker</th>
-                  <th>Azienda</th>
-                  <th>Borsa</th>
-                  <th>Asset Type</th>
-                  <th>Data quotazione</th>
-                  <th>Data delisting</th>
-                  <th>Status</th>
+                  <th>Ticker</th><th>Azienda</th><th>Borsa</th>
+                  <th>Asset Type</th><th>Data quotazione</th>
+                  <th>Data delisting</th><th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -373,23 +442,23 @@
 
         mostra.forEach((r) => {
           const isActive = (r.status || "").toLowerCase() === "active";
-          html += `
-            <tr>
-              <td class="ticker-cell">${r.symbol || "—"}</td>
-              <td>${r.name || "—"}</td>
-              <td class="mono" style="color:var(--text-dim)">${r.exchange || "—"}</td>
-              <td class="mono" style="color:var(--text-dim)">${r.assetType || "—"}</td>
-              <td class="mono">${formatDateIT(r.ipoDate)}</td>
-              <td class="mono" style="color:var(--text-dim)">${formatDateIT(r.delistingDate)}</td>
-              <td><span class="${isActive ? "badge-active" : "badge-delisted"}">${isActive ? "attiva" : "delistata"}</span></td>
-            </tr>
-          `;
+          html += `<tr>
+            <td class="ticker-cell">${r.symbol || "—"}</td>
+            <td>${r.name || "—"}</td>
+            <td class="mono" style="color:var(--text-dim)">${r.exchange || "—"}</td>
+            <td class="mono" style="color:var(--text-dim)">${r.assetType || "—"}</td>
+            <td class="mono">${formatDateIT(r.ipoDate)}</td>
+            <td class="mono" style="color:var(--text-dim)">${formatDateIT(r.delistingDate)}</td>
+            <td><span class="${isActive ? "badge-active" : "badge-delisted"}">${isActive ? "attiva" : "delistata"}</span></td>
+          </tr>`;
         });
 
         html += `</tbody></table></div>`;
+
         if (dati.length > 200) {
-          html += `<p style="color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:12px;">Mostrati 200 di ${dati.length} — usa il filtro per affinare la ricerca</p>`;
+          html += `<p class="note">Mostrati 200 di ${dati.length} — usa il filtro per affinare la ricerca</p>`;
         }
+
         document.getElementById("risultati").innerHTML = html;
       }
 
