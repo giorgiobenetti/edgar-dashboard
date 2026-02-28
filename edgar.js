@@ -136,4 +136,44 @@ function getDatiFinanziari(cik, callback) {
   request.end();
 }
 
-module.exports = { getAziende, getDettaglioAzienda, getDatiFinanziari };
+// ─── Company facts completi (per financial-check-edgar) ──
+function getCompanyFacts(cik, callback) {
+  const cikPadded = String(cik).padStart(10, "0");
+
+  const options = {
+    hostname: "data.sec.gov",
+    path: `/api/xbrl/companyfacts/CIK${cikPadded}.json`,
+    method: "GET",
+    headers: {
+      "User-Agent": "edgar-dashboard giorgiobenetti@gmail.com",
+      Accept: "application/json",
+    },
+  };
+
+  const request = https.request(options, function (response) {
+    let data = "";
+    response.on("data", function (chunk) {
+      data += chunk;
+    });
+    response.on("end", function () {
+      try {
+        const facts = JSON.parse(data);
+        callback(null, facts);
+      } catch (e) {
+        callback(e, null);
+      }
+    });
+  });
+
+  request.on("error", function (err) {
+    callback(err, null);
+  });
+  request.end();
+}
+
+module.exports = {
+  getAziende,
+  getDettaglioAzienda,
+  getDatiFinanziari,
+  getCompanyFacts,
+};

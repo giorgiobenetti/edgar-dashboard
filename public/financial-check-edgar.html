@@ -499,33 +499,25 @@
           let nomeAzienda = input;
           let tickerAzienda = input;
 
-          // Se è un numero è già un CIK, altrimenti cerchiamo il ticker
+          // Se è un numero è già un CIK, altrimenti risolviamo il ticker via server
           if (/^\d+$/.test(input)) {
             cik = input.padStart(10, "0");
           } else {
-            // Cerca il CIK dalla lista EDGAR
-            const res = await fetch(
-              "https://www.sec.gov/files/company_tickers.json",
-            );
-            const tickers = await res.json();
-            const found = Object.values(tickers).find(
-              (a) => a.ticker.toUpperCase() === input,
-            );
-            if (!found) {
+            const tickerRes = await fetch(`/api/ticker/${input}`);
+            if (!tickerRes.ok) {
               setStatus("error", `Ticker ${input} non trovato in EDGAR`);
               document.getElementById("btn-search").disabled = false;
               return;
             }
-            cik = String(found.cik_str).padStart(10, "0");
-            nomeAzienda = found.title;
-            tickerAzienda = found.ticker;
+            const tickerData = await tickerRes.json();
+            cik = tickerData.cik;
+            nomeAzienda = tickerData.name;
+            tickerAzienda = tickerData.ticker;
           }
 
           setStatus("loading", `Caricamento dati EDGAR per ${nomeAzienda}...`);
 
-          const factsRes = await fetch(
-            `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`,
-          );
+          const factsRes = await fetch(`/api/edgar/facts/${cik}`);
           const facts = await factsRes.json();
 
           factsGlobal = { facts, nomeAzienda, tickerAzienda, cik };
