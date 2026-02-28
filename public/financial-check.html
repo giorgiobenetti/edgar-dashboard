@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Financial Check</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0e17;
+        --surface: #111827;
+        --surface2: #1a2235;
+        --border: #1f2d45;
+        --accent: #00d4ff;
+        --green: #10b981;
+        --red: #ef4444;
+        --text: #e2e8f0;
+        --text-dim: #64748b;
+        --text-muted: #334155;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "IBM Plex Sans", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 32px 24px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        font-size: 32px;
+        font-weight: 300;
+        letter-spacing: -0.02em;
+        margin-bottom: 4px;
+      }
+      h1 span {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .subtitle {
+        color: var(--text-dim);
+        font-size: 14px;
+        margin-bottom: 32px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      /* Search */
+      .search-box {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 28px;
+      }
+      .search-box h3 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        margin-bottom: 14px;
+      }
+      .search-row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .field input {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+        width: 220px;
+      }
+      .field input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .field input::placeholder {
+        color: var(--text-muted);
+      }
+
+      .toggle-group {
+        display: flex;
+        gap: 4px;
+      }
+      .tog {
+        padding: 8px 16px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--surface2);
+        color: var(--text-dim);
+        font-size: 12px;
+        font-family: "IBM Plex Mono", monospace;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .tog:hover {
+        color: var(--text);
+      }
+      .tog.attivo {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(0, 212, 255, 0.06);
+      }
+
+      .btn-search {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: "IBM Plex Mono", monospace;
+        transition: opacity 0.2s;
+      }
+      .btn-search:hover {
+        opacity: 0.85;
+      }
+      .btn-search:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* Company header */
+      .company-header {
+        display: none;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+      }
+      .company-header.visible {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .company-header .ch-name {
+        font-size: 20px;
+        font-weight: 600;
+      }
+      .company-header .ch-ticker {
+        font-family: "IBM Plex Mono", monospace;
+        color: var(--accent);
+        font-size: 16px;
+      }
+      .company-header .ch-date {
+        font-family: "IBM Plex Mono", monospace;
+        color: var(--text-dim);
+        font-size: 13px;
+        margin-left: auto;
+      }
+
+      /* Status */
+      .status-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+      }
+      .dot.loading {
+        background: var(--accent);
+        animation: pulse 1s infinite;
+      }
+      .dot.ready {
+        background: var(--green);
+      }
+      .dot.error {
+        background: var(--red);
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      /* Tabs */
+      .tabs {
+        display: none;
+        margin-bottom: 0;
+      }
+      .tabs.visible {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 0;
+      }
+      .tab-btn {
+        padding: 12px 24px;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-dim);
+        font-size: 13px;
+        font-family: "IBM Plex Mono", monospace;
+        cursor: pointer;
+        transition: all 0.15s;
+        letter-spacing: 0.05em;
+        margin-bottom: -1px;
+      }
+      .tab-btn:hover {
+        color: var(--text);
+      }
+      .tab-btn.attivo {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      /* Tab content */
+      .tab-content {
+        display: none;
+      }
+      .tab-content.visible {
+        display: block;
+      }
+
+      /* Tabella finanziaria */
+      .fin-table-wrap {
+        border: 1px solid var(--border);
+        border-radius: 0 8px 8px 8px;
+        overflow: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      thead tr {
+        background: var(--surface2);
+        position: sticky;
+        top: 0;
+      }
+      th {
+        padding: 10px 14px;
+        text-align: right;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        white-space: nowrap;
+      }
+      th:first-child {
+        text-align: left;
+        min-width: 260px;
+      }
+      td {
+        padding: 9px 14px;
+        border-bottom: 1px solid var(--border);
+        text-align: right;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      td:first-child {
+        text-align: left;
+        font-family: "IBM Plex Sans", sans-serif;
+        font-size: 13px;
+        color: var(--text-dim);
+        padding-left: 16px;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:hover td {
+        background: var(--surface);
+      }
+      .row-highlight td {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .row-highlight td:first-child {
+        color: var(--text);
+      }
+      .positive {
+        color: var(--green);
+      }
+      .negative {
+        color: var(--red);
+      }
+      .section-header td {
+        background: var(--surface2) !important;
+        color: var(--text-dim) !important;
+        font-size: 11px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 6px 14px !important;
+        font-family: "IBM Plex Mono", monospace !important;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="/navbar.js"></script>
+
+    <h1>Financial <span>Check</span></h1>
+    <p class="subtitle">
+      // verifica prospetti finanziari · fonte: Alpha Vantage
+    </p>
+
+    <div class="search-box">
+      <h3>// Cerca azienda</h3>
+      <div class="search-row">
+        <div class="field">
+          <label>Ticker</label>
+          <input
+            type="text"
+            id="input-ticker"
+            placeholder="es. AAPL, NVDA, CRM..."
+          />
+        </div>
+        <div class="field">
+          <label>Periodo</label>
+          <div class="toggle-group">
+            <button
+              class="tog attivo"
+              id="tog-annual"
+              onclick="setPeriodo('annual')"
+            >
+              Annuale
+            </button>
+            <button
+              class="tog"
+              id="tog-quarter"
+              onclick="setPeriodo('quarter')"
+            >
+              Trimestrale
+            </button>
+          </div>
+        </div>
+        <button
+          class="btn-search"
+          id="btn-search"
+          onclick="cercaFinanziari()"
+        >
+          CARICA
+        </button>
+      </div>
+    </div>
+
+    <!-- Company header -->
+    <div
+      class="company-header"
+      id="company-header"
+    >
+      <span
+        class="ch-name"
+        id="ch-name"
+      ></span>
+      <span
+        class="ch-ticker"
+        id="ch-ticker"
+      ></span>
+      <span
+        class="ch-date"
+        id="ch-date"
+      ></span>
+    </div>
+
+    <!-- Status -->
+    <div class="status-bar">
+      <div
+        class="dot"
+        id="status-dot"
+      ></div>
+      <span id="status-text">Inserisci un ticker e clicca CARICA</span>
+    </div>
+
+    <!-- Tabs -->
+    <div
+      class="tabs"
+      id="tabs"
+    >
+      <button
+        class="tab-btn attivo"
+        onclick="showTab('income')"
+      >
+        Income Statement
+      </button>
+      <button
+        class="tab-btn"
+        onclick="showTab('balance')"
+      >
+        Balance Sheet
+      </button>
+      <button
+        class="tab-btn"
+        onclick="showTab('cashflow')"
+      >
+        Cash Flow
+      </button>
+    </div>
+
+    <div
+      id="tab-income"
+      class="tab-content visible"
+    ></div>
+    <div
+      id="tab-balance"
+      class="tab-content"
+    ></div>
+    <div
+      id="tab-cashflow"
+      class="tab-content"
+    ></div>
+
+    <script>
+      const API_KEY = "6UCUC5N71W0X8L7D";
+      let periodoCorrente = "annual";
+      let datiCorrenti = null;
+
+      document
+        .getElementById("input-ticker")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter") cercaFinanziari();
+        });
+
+      function setPeriodo(p) {
+        periodoCorrente = p;
+        document.getElementById("tog-annual").className =
+          "tog" + (p === "annual" ? " attivo" : "");
+        document.getElementById("tog-quarter").className =
+          "tog" + (p === "quarter" ? " attivo" : "");
+        // Se ci sono già dati, ri-renderizza
+        if (datiCorrenti) renderTutti(datiCorrenti);
+      }
+
+      function showTab(tab) {
+        ["income", "balance", "cashflow"].forEach((t) => {
+          document.getElementById("tab-" + t).className =
+            "tab-content" + (t === tab ? " visible" : "");
+        });
+        document.querySelectorAll(".tab-btn").forEach((btn, i) => {
+          const tabs = ["income", "balance", "cashflow"];
+          btn.className = "tab-btn" + (tabs[i] === tab ? " attivo" : "");
+        });
+      }
+
+      async function cercaFinanziari() {
+        const ticker = document
+          .getElementById("input-ticker")
+          .value.trim()
+          .toUpperCase();
+        if (!ticker) return;
+
+        setStatus("loading", `Caricamento dati per ${ticker}...`);
+        document.getElementById("btn-search").disabled = true;
+        document.getElementById("tabs").className = "tabs";
+        document.getElementById("company-header").className = "company-header";
+        ["income", "balance", "cashflow"].forEach(
+          (t) => (document.getElementById("tab-" + t).innerHTML = ""),
+        );
+
+        try {
+          const [incRes, balRes, cfRes, ovRes] = await Promise.all([
+            fetch(
+              `https://www.alphavantage.co/query?function=INCOME_STATEMENT&symbol=${ticker}&apikey=${API_KEY}`,
+            ),
+            fetch(
+              `https://www.alphavantage.co/query?function=BALANCE_SHEET&symbol=${ticker}&apikey=${API_KEY}`,
+            ),
+            fetch(
+              `https://www.alphavantage.co/query?function=CASH_FLOW&symbol=${ticker}&apikey=${API_KEY}`,
+            ),
+            fetch(
+              `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${API_KEY}`,
+            ),
+          ]);
+
+          const [inc, bal, cf, ov] = await Promise.all([
+            incRes.json(),
+            balRes.json(),
+            cfRes.json(),
+            ovRes.json(),
+          ]);
+
+          if (!inc.annualReports && !inc.quarterlyReports) {
+            setStatus("error", `Nessun dato trovato per ${ticker}`);
+            document.getElementById("btn-search").disabled = false;
+            return;
+          }
+
+          datiCorrenti = { inc, bal, cf, ov, ticker };
+
+          // Company header
+          document.getElementById("ch-name").textContent = ov.Name || ticker;
+          document.getElementById("ch-ticker").textContent = ticker;
+          document.getElementById("company-header").className =
+            "company-header visible";
+
+          renderTutti(datiCorrenti);
+          document.getElementById("tabs").className = "tabs visible";
+          setStatus("ready", `Dati caricati per ${ov.Name || ticker}`);
+        } catch (err) {
+          setStatus("error", "Errore: " + err.message);
+        }
+
+        document.getElementById("btn-search").disabled = false;
+      }
+
+      function renderTutti(dati) {
+        const key =
+          periodoCorrente === "annual" ? "annualReports" : "quarterlyReports";
+        const incReports = dati.inc[key] || [];
+        const balReports = dati.bal[key] || [];
+        const cfReports = dati.cf[key] || [];
+
+        // Date dei periodi (intestazioni colonne)
+        const date = incReports.map((r) => formatDateIT(r.fiscalDateEnding));
+
+        // Aggiorna data nell'header
+        if (date.length > 0) {
+          document.getElementById("ch-date").textContent =
+            periodoCorrente === "annual"
+              ? `Ultimi ${date.length} anni`
+              : `Ultimi ${date.length} trimestri`;
+        }
+
+        renderIncomeStatement(incReports, date);
+        renderBalanceSheet(balReports, date);
+        renderCashFlow(cfReports, date);
+      }
+
+      // ─── INCOME STATEMENT ──────────────────────────────
+      function renderIncomeStatement(reports, date) {
+        const righe = [
+          { label: "Ricavi totali", key: "totalRevenue", highlight: true },
+          { label: "Costo del venduto", key: "costOfRevenue" },
+          { label: "Gross Profit", key: "grossProfit", highlight: true },
+          { label: "R&D", key: "researchAndDevelopment" },
+          { label: "SG&A", key: "sellingGeneralAndAdministrative" },
+          {
+            label: "Operating Income",
+            key: "operatingIncome",
+            highlight: true,
+          },
+          { label: "EBITDA", key: "ebitda", highlight: true },
+          { label: "Interest Expense", key: "interestExpense" },
+          { label: "Reddito ante imposte", key: "incomeBeforeTax" },
+          { label: "Tax provision", key: "incomeTaxExpense" },
+          { label: "Utile Netto", key: "netIncome", highlight: true },
+          { label: "EPS base", key: "reportedEPS" },
+          { label: "EPS diluito", key: "reportedEPS" },
+        ];
+
+        document.getElementById("tab-income").innerHTML = buildTable(
+          reports,
+          date,
+          righe,
+        );
+      }
+
+      // ─── BALANCE SHEET ──────────────────────────────────
+      function renderBalanceSheet(reports, date) {
+        const righe = [
+          { label: "— ATTIVO —", section: true },
+          {
+            label: "Cash & equivalenti",
+            key: "cashAndCashEquivalentsAtCarryingValue",
+            highlight: true,
+          },
+          { label: "Investimenti breve termine", key: "shortTermInvestments" },
+          { label: "Crediti commerciali", key: "currentNetReceivables" },
+          { label: "Inventario", key: "inventory" },
+          {
+            label: "Totale attivo corrente",
+            key: "totalCurrentAssets",
+            highlight: true,
+          },
+          { label: "Immobilizzazioni nette", key: "propertyPlantEquipmentNet" },
+          { label: "Goodwill", key: "goodwill" },
+          { label: "Totale attivo", key: "totalAssets", highlight: true },
+          { label: "— PASSIVO —", section: true },
+          { label: "Debiti correnti", key: "currentAccountsPayable" },
+          { label: "Debito breve termine", key: "shortTermDebt" },
+          {
+            label: "Totale passivo corrente",
+            key: "totalCurrentLiabilities",
+            highlight: true,
+          },
+          { label: "Debito lungo termine", key: "longTermDebt" },
+          { label: "Totale passivo", key: "totalLiabilities", highlight: true },
+          { label: "— PATRIMONIO NETTO —", section: true },
+          {
+            label: "Patrimonio netto totale",
+            key: "totalShareholderEquity",
+            highlight: true,
+          },
+          {
+            label: "Azioni in circolazione",
+            key: "commonStockSharesOutstanding",
+          },
+        ];
+
+        document.getElementById("tab-balance").innerHTML = buildTable(
+          reports,
+          date,
+          righe,
+        );
+      }
+
+      // ─── CASH FLOW ──────────────────────────────────────
+      function renderCashFlow(reports, date) {
+        const righe = [
+          { label: "— OPERATIVO —", section: true },
+          { label: "Utile Netto", key: "netIncome" },
+          {
+            label: "Ammortamenti",
+            key: "depreciationDepletionAndAmortization",
+          },
+          {
+            label: "Cash Flow Operativo",
+            key: "operatingCashflow",
+            highlight: true,
+          },
+          { label: "— INVESTIMENTI —", section: true },
+          { label: "CapEx", key: "capitalExpenditures" },
+          {
+            label: "Cash Flow Investimenti",
+            key: "cashflowFromInvestment",
+            highlight: true,
+          },
+          { label: "— FINANZIAMENTO —", section: true },
+          { label: "Dividendi pagati", key: "dividendPayout" },
+          {
+            label: "Riacquisto azioni",
+            key: "paymentsForRepurchaseOfCommonStock",
+          },
+          {
+            label: "Emissione debito",
+            key: "proceedsFromIssuanceOfLongTermDebtAndCapitalSecuritiesNet",
+          },
+          {
+            label: "Cash Flow Finanziamento",
+            key: "cashflowFromFinancing",
+            highlight: true,
+          },
+          { label: "— RIEPILOGO —", section: true },
+          {
+            label: "Free Cash Flow",
+            key: "operatingCashflow",
+            highlight: true,
+            calc: (r) => {
+              const ocf = parseFloat(r.operatingCashflow) || 0;
+              const capex = Math.abs(parseFloat(r.capitalExpenditures) || 0);
+              return ocf - capex;
+            },
+          },
+          { label: "Variazione netta cassa", key: "changeInCash" },
+        ];
+
+        document.getElementById("tab-cashflow").innerHTML = buildTable(
+          reports,
+          date,
+          righe,
+        );
+      }
+
+      // ─── Builder tabella generico ───────────────────────
+      function buildTable(reports, date, righe) {
+        if (!reports || reports.length === 0) {
+          return `<div style="padding:40px;text-align:center;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;">Nessun dato disponibile</div>`;
+        }
+
+        let html = `<div class="fin-table-wrap"><table><thead><tr><th>Voce</th>`;
+        date.forEach((d) => {
+          html += `<th>${d}</th>`;
+        });
+        html += `</tr></thead><tbody>`;
+
+        righe.forEach((riga) => {
+          if (riga.section) {
+            html += `<tr class="section-header"><td colspan="${date.length + 1}">${riga.label}</td></tr>`;
+            return;
+          }
+
+          const rowClass = riga.highlight ? ' class="row-highlight"' : "";
+          html += `<tr${rowClass}><td>${riga.label}</td>`;
+
+          reports.forEach((r) => {
+            let val;
+            if (riga.calc) {
+              val = riga.calc(r);
+            } else {
+              val = parseFloat(r[riga.key]);
+            }
+
+            if (isNaN(val) || r[riga.key] === "None") {
+              html += `<td style="color:var(--text-muted)">—</td>`;
+            } else {
+              const cls = val < 0 ? ' class="negative"' : "";
+              html += `<td${cls}>${formatNum(val)}</td>`;
+            }
+          });
+
+          html += `</tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        return html;
+      }
+
+      // ─── Formattatori ────────────────────────────────────
+      function formatNum(val) {
+        if (isNaN(val)) return "—";
+        const abs = Math.abs(val);
+        const sign = val < 0 ? "-" : "";
+        if (abs >= 1_000_000_000)
+          return sign + (abs / 1_000_000_000).toFixed(2) + "B";
+        if (abs >= 1_000_000) return sign + (abs / 1_000_000).toFixed(2) + "M";
+        if (abs >= 1_000) return sign + (abs / 1_000).toFixed(1) + "K";
+        return val.toLocaleString();
+      }
+
+      function formatDateIT(dateStr) {
+        if (!dateStr) return "—";
+        const d = new Date(dateStr + "T12:00:00");
+        return d.toLocaleDateString("it-IT", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+      }
+
+      function setStatus(tipo, testo) {
+        document.getElementById("status-dot").className = "dot " + tipo;
+        document.getElementById("status-text").textContent = testo;
+      }
+    </script>
+  </body>
+</html>
