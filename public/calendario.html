@@ -1,5 +1,773 @@
-// PRIMA
-<div class="date">${r.reportDate}</div>
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Calendario Trimestrali</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap");
 
-// DOPO
-<div class="date">${formatDateIT(r.reportDate)}</div>
+      :root {
+        --bg: #0a0e17;
+        --surface: #111827;
+        --surface2: #1a2235;
+        --border: #1f2d45;
+        --accent: #00d4ff;
+        --accent2: #7c3aed;
+        --green: #10b981;
+        --red: #ef4444;
+        --text: #e2e8f0;
+        --text-dim: #64748b;
+        --text-muted: #334155;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "IBM Plex Sans", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 32px 24px;
+      }
+
+      /* Header */
+      .top-nav {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 40px;
+      }
+
+      .top-nav a {
+        color: var(--text-dim);
+        text-decoration: none;
+        font-size: 13px;
+        font-family: "IBM Plex Mono", monospace;
+        letter-spacing: 0.05em;
+        transition: color 0.2s;
+      }
+
+      .top-nav a:hover {
+        color: var(--accent);
+      }
+
+      .top-nav span {
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+
+      h1 {
+        font-size: 32px;
+        font-weight: 300;
+        letter-spacing: -0.02em;
+        margin-bottom: 4px;
+      }
+
+      h1 span {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .subtitle {
+        color: var(--text-dim);
+        font-size: 14px;
+        margin-bottom: 36px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      /* Pannello controlli */
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr auto;
+        gap: 12px;
+        margin-bottom: 32px;
+        align-items: end;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .field label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .field input {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: "IBM Plex Sans", sans-serif;
+        transition: border-color 0.2s;
+        width: 100%;
+      }
+
+      .field input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .field input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(0.5);
+        cursor: pointer;
+      }
+
+      .btn-search {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: "IBM Plex Mono", monospace;
+        letter-spacing: 0.05em;
+        transition: opacity 0.2s;
+        white-space: nowrap;
+      }
+
+      .btn-search:hover {
+        opacity: 0.85;
+      }
+      .btn-search:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* Sezione ricerca singola azienda */
+      .search-company {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 32px;
+      }
+
+      .search-company h3 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        margin-bottom: 14px;
+      }
+
+      .search-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .search-row input {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: "IBM Plex Sans", sans-serif;
+        width: 300px;
+        transition: border-color 0.2s;
+      }
+
+      .search-row input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .search-row input::placeholder {
+        color: var(--text-muted);
+      }
+
+      .btn-find {
+        background: var(--surface2);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: "IBM Plex Mono", monospace;
+        transition: background 0.2s;
+      }
+
+      .btn-find:hover {
+        background: rgba(0, 212, 255, 0.08);
+      }
+
+      .company-result {
+        margin-top: 14px;
+        padding: 14px;
+        background: var(--surface2);
+        border-radius: 6px;
+        border-left: 3px solid var(--accent);
+        display: none;
+      }
+
+      .company-result.visible {
+        display: block;
+      }
+
+      .company-result .cr-name {
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 6px;
+      }
+
+      .company-result .cr-detail {
+        font-size: 13px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      /* Stato */
+      .status-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+      }
+
+      .dot.loading {
+        background: var(--accent);
+        animation: pulse 1s infinite;
+      }
+
+      .dot.ready {
+        background: var(--green);
+      }
+      .dot.error {
+        background: var(--red);
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      /* Tabella risultati */
+      .results-header {
+        display: grid;
+        grid-template-columns: 100px 1fr 140px 100px 120px;
+        gap: 0;
+        padding: 10px 16px;
+        background: var(--surface2);
+        border-radius: 6px 6px 0 0;
+        border: 1px solid var(--border);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .results-body {
+        border: 1px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 6px 6px;
+        overflow: hidden;
+      }
+
+      .result-row {
+        display: grid;
+        grid-template-columns: 100px 1fr 140px 100px 120px;
+        gap: 0;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        transition: background 0.15s;
+        align-items: center;
+      }
+
+      .result-row:last-child {
+        border-bottom: none;
+      }
+      .result-row:hover {
+        background: var(--surface);
+      }
+
+      .result-row .ticker {
+        font-family: "IBM Plex Mono", monospace;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--accent);
+      }
+
+      .result-row .company-name {
+        font-size: 14px;
+        color: var(--text);
+      }
+
+      .result-row .date {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+        color: var(--text);
+      }
+
+      .result-row .estimate {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+      }
+
+      .estimate.positive {
+        color: var(--green);
+      }
+      .estimate.negative {
+        color: var(--red);
+      }
+      .estimate.neutral {
+        color: var(--text-dim);
+      }
+
+      .timing-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-family: "IBM Plex Mono", monospace;
+        font-weight: 600;
+      }
+
+      .timing-badge.pre {
+        background: rgba(124, 58, 237, 0.2);
+        color: #a78bfa;
+      }
+      .timing-badge.post {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+      }
+      .timing-badge.unknown {
+        background: var(--surface2);
+        color: var(--text-muted);
+      }
+
+      /* Raggruppamento per data */
+      .date-group-header {
+        padding: 10px 16px;
+        background: var(--surface2);
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+        font-family: "IBM Plex Mono", monospace;
+        color: var(--accent);
+        letter-spacing: 0.05em;
+        font-weight: 600;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+      }
+
+      .count-badge {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 2px 10px;
+        font-size: 12px;
+        font-family: "IBM Plex Mono", monospace;
+        color: var(--text-dim);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-nav">
+      <a href="/">← dashboard</a>
+      <span>/</span>
+      <span style="color: var(--text-dim)">calendario trimestrali</span>
+    </div>
+
+    <h1>Earnings <span>Calendar</span></h1>
+    <p class="subtitle">
+      // date di pubblicazione trimestrali · fonte: Alpha Vantage
+    </p>
+
+    <!-- Ricerca singola azienda -->
+    <div class="search-company">
+      <h3>// Cerca azienda</h3>
+      <div class="search-row">
+        <input
+          type="text"
+          id="input-ticker"
+          placeholder="es. AAPL, NVDA, CRM..."
+        />
+        <button
+          class="btn-find"
+          onclick="cercaAzienda()"
+        >
+          CERCA
+        </button>
+      </div>
+      <div
+        class="company-result"
+        id="company-result"
+      ></div>
+    </div>
+
+    <!-- Controlli calendario -->
+    <div class="controls">
+      <div class="field">
+        <label>Data inizio</label>
+        <input
+          type="date"
+          id="data-inizio"
+        />
+      </div>
+      <div class="field">
+        <label>Data fine</label>
+        <input
+          type="date"
+          id="data-fine"
+        />
+      </div>
+      <div class="field">
+        <label>Filtra per nome</label>
+        <input
+          type="text"
+          id="filtro-nome"
+          placeholder="es. Apple, Bank..."
+        />
+      </div>
+      <button
+        class="btn-search"
+        id="btn-carica"
+        onclick="caricaCalendario()"
+      >
+        CARICA
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div class="status-bar">
+      <div
+        class="dot"
+        id="status-dot"
+      ></div>
+      <span id="status-text"
+        >Seleziona un intervallo di date e clicca CARICA</span
+      >
+      <span
+        class="count-badge"
+        id="count-badge"
+        style="display: none"
+      ></span>
+    </div>
+
+    <!-- Risultati -->
+    <div id="risultati"></div>
+
+    <script>
+      // ⚠️ SOSTITUISCI CON LA TUA NUOVA API KEY
+      const API_KEY = "LA_TUA_NUOVA_API_KEY";
+
+      // Imposta date di default: oggi + 30 giorni
+      const oggi = new Date();
+      const tra30 = new Date();
+      tra30.setDate(oggi.getDate() + 30);
+
+      document.getElementById("data-inizio").value = formatDate(oggi);
+      document.getElementById("data-fine").value = formatDate(tra30);
+
+      function formatDate(d) {
+        return d.toISOString().split("T")[0];
+      }
+
+      // ─── Carica calendario per intervallo date ───────────
+      async function caricaCalendario() {
+        const dataInizio = document.getElementById("data-inizio").value;
+        const dataFine = document.getElementById("data-fine").value;
+        const filtroNome = document
+          .getElementById("filtro-nome")
+          .value.toLowerCase()
+          .trim();
+
+        if (!dataInizio || !dataFine) {
+          setStatus("error", "Seleziona entrambe le date");
+          return;
+        }
+
+        if (dataFine < dataInizio) {
+          setStatus(
+            "error",
+            "La data fine deve essere successiva alla data inizio",
+          );
+          return;
+        }
+
+        setStatus("loading", "Caricamento dati da Alpha Vantage...");
+        document.getElementById("btn-carica").disabled = true;
+        document.getElementById("risultati").innerHTML = "";
+        document.getElementById("count-badge").style.display = "none";
+
+        try {
+          // Alpha Vantage restituisce CSV — lo parsiamo manualmente
+          const url = `https://www.alphavantage.co/query?function=EARNINGS_CALENDAR&horizon=12month&apikey=${API_KEY}`;
+          const response = await fetch(url);
+          const csv = await response.text();
+
+          const righe = parseCSV(csv);
+
+          // Filtra per intervallo date
+          let filtrate = righe.filter((r) => {
+            return r.reportDate >= dataInizio && r.reportDate <= dataFine;
+          });
+
+          // Filtra per nome se specificato
+          if (filtroNome) {
+            filtrate = filtrate.filter(
+              (r) =>
+                r.name.toLowerCase().includes(filtroNome) ||
+                r.symbol.toLowerCase().includes(filtroNome),
+            );
+          }
+
+          // Ordina per data
+          filtrate.sort((a, b) => a.reportDate.localeCompare(b.reportDate));
+
+          if (filtrate.length === 0) {
+            document.getElementById("risultati").innerHTML = `
+            <div class="empty-state">Nessuna trimestrale trovata per l'intervallo selezionato</div>
+          `;
+            setStatus("ready", "Ricerca completata");
+          } else {
+            renderCalendario(filtrate);
+            setStatus("ready", `Trovate ${filtrate.length} trimestrali`);
+            const badge = document.getElementById("count-badge");
+            badge.textContent = filtrate.length + " aziende";
+            badge.style.display = "inline";
+          }
+        } catch (err) {
+          setStatus("error", "Errore nel caricamento: " + err.message);
+        }
+
+        document.getElementById("btn-carica").disabled = false;
+      }
+
+      // ─── Cerca singola azienda ───────────────────────────
+      async function cercaAzienda() {
+        const ticker = document
+          .getElementById("input-ticker")
+          .value.trim()
+          .toUpperCase();
+        if (!ticker) return;
+
+        const resultDiv = document.getElementById("company-result");
+        resultDiv.className = "company-result visible";
+        resultDiv.innerHTML = `<div class="cr-detail">Ricerca in corso...</div>`;
+
+        try {
+          const url = `https://www.alphavantage.co/query?function=EARNINGS_CALENDAR&symbol=${ticker}&horizon=12month&apikey=${API_KEY}`;
+          const response = await fetch(url);
+          const csv = await response.text();
+          const righe = parseCSV(csv);
+
+          if (righe.length === 0) {
+            resultDiv.innerHTML = `<div class="cr-detail" style="color: var(--red)">Nessun dato trovato per ${ticker}</div>`;
+            return;
+          }
+
+          // Prendi la prossima data
+          const prossima = righe
+            .filter((r) => r.reportDate >= formatDate(new Date()))
+            .sort((a, b) => a.reportDate.localeCompare(b.reportDate))[0];
+
+          const tutte = righe.sort((a, b) =>
+            a.reportDate.localeCompare(b.reportDate),
+          );
+          const nome = tutte[0]?.name || ticker;
+
+          let html = `<div class="cr-name">${nome} (${ticker})</div>`;
+
+          if (prossima) {
+            const stima = prossima.estimate
+              ? `EPS stimato: <strong style="color:${parseFloat(prossima.estimate) >= 0 ? "var(--green)" : "var(--red)"}">${parseFloat(prossima.estimate).toFixed(2)}</strong>`
+              : "EPS stimato: N/D";
+
+            const timing = prossima.timeOfDay ? `· ${prossima.timeOfDay}` : "";
+
+            html += `<div class="cr-detail">
+            Prossima trimestrale: <strong style="color:var(--accent)">${prossima.reportDate}</strong>
+            ${timing} · Fine periodo fiscale: ${prossima.fiscalDateEnding} · ${stima}
+          </div>`;
+          } else {
+            html += `<div class="cr-detail" style="color: var(--text-dim)">Nessuna trimestrale programmata nei prossimi 12 mesi</div>`;
+          }
+
+          // Mostra tutte le date disponibili
+          if (tutte.length > 1) {
+            html += `<div class="cr-detail" style="margin-top:8px; color: var(--text-muted)">
+            Tutte le date: ${tutte.map((r) => r.reportDate).join(" · ")}
+          </div>`;
+          }
+
+          resultDiv.innerHTML = html;
+        } catch (err) {
+          resultDiv.innerHTML = `<div class="cr-detail" style="color: var(--red)">Errore: ${err.message}</div>`;
+        }
+      }
+
+      // Tasto invio su campo ticker
+      document
+        .getElementById("input-ticker")
+        .addEventListener("keydown", function (e) {
+          if (e.key === "Enter") cercaAzienda();
+        });
+
+      // ─── Render calendario raggruppato per data ──────────
+      function renderCalendario(righe) {
+        const container = document.getElementById("risultati");
+
+        // Raggruppa per data
+        const gruppi = {};
+        righe.forEach((r) => {
+          if (!gruppi[r.reportDate]) gruppi[r.reportDate] = [];
+          gruppi[r.reportDate].push(r);
+        });
+
+        let html = `
+        <div class="results-header">
+          <div>Ticker</div>
+          <div>Azienda</div>
+          <div>Data</div>
+          <div>EPS stimato</div>
+          <div>Orario</div>
+        </div>
+        <div class="results-body">
+      `;
+
+        Object.keys(gruppi)
+          .sort()
+          .forEach((data) => {
+            const aziende = gruppi[data];
+            const dataFormatted = new Date(
+              data + "T12:00:00",
+            ).toLocaleDateString("it-IT", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            });
+
+            html += `<div class="date-group-header">// ${dataFormatted} · ${aziende.length} aziende</div>`;
+
+            aziende.forEach((r) => {
+              const est = parseFloat(r.estimate);
+              const estClass = isNaN(est)
+                ? "neutral"
+                : est >= 0
+                  ? "positive"
+                  : "negative";
+              const estTxt = isNaN(est)
+                ? "N/D"
+                : (est >= 0 ? "+" : "") + est.toFixed(2);
+
+              const tod = (r.timeOfDay || "").toLowerCase();
+              const timingClass = tod.includes("pre")
+                ? "pre"
+                : tod.includes("post")
+                  ? "post"
+                  : "unknown";
+              const timingLabel = tod.includes("pre")
+                ? "pre-market"
+                : tod.includes("post")
+                  ? "post-market"
+                  : "—";
+
+              html += `
+            <div class="result-row">
+              <div class="ticker">${r.symbol}</div>
+              <div class="company-name">${r.name}</div>
+              <div class="date">${formatDateIT(r.reportDate)}</div>
+              <div class="estimate ${estClass}">${estTxt}</div>
+              <div><span class="timing-badge ${timingClass}">${timingLabel}</span></div>
+            </div>
+          `;
+            });
+          });
+
+        html += `</div>`;
+        container.innerHTML = html;
+      }
+
+      // ─── Formatta data in italiano ───────────────────────
+      function formatDateIT(dateStr) {
+        const d = new Date(dateStr + "T12:00:00");
+        return d.toLocaleDateString("it-IT", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+      }
+
+      // ─── Parser CSV ──────────────────────────────────────
+      function parseCSV(csv) {
+        const righe = csv.trim().split("\n");
+        if (righe.length < 2) return [];
+
+        // Prima riga = intestazioni
+        const headers = righe[0].split(",");
+
+        return righe
+          .slice(1)
+          .map((riga) => {
+            const valori = riga.split(",");
+            const obj = {};
+            headers.forEach((h, i) => {
+              obj[h.trim()] = (valori[i] || "").trim();
+            });
+            return {
+              symbol: obj["symbol"] || "",
+              name: obj["name"] || "",
+              reportDate: obj["reportDate"] || "",
+              fiscalDateEnding: obj["fiscalDateEnding"] || "",
+              estimate: obj["estimate"] || "",
+              timeOfDay: obj["timeOfTheDay"] || "",
+            };
+          })
+          .filter((r) => r.symbol && r.reportDate);
+      }
+
+      // ─── Helper stato ────────────────────────────────────
+      function setStatus(tipo, testo) {
+        const dot = document.getElementById("status-dot");
+        const txt = document.getElementById("status-text");
+        dot.className = "dot " + tipo;
+        txt.textContent = testo;
+      }
+    </script>
+  </body>
+</html>
