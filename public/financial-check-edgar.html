@@ -537,37 +537,42 @@
         document.getElementById("btn-search").disabled = false;
       }
 
-      // ─── Estrai serie temporale da un tag EDGAR ──────────
-      function getSerie(usGaap, ...tags) {
-        for (const tag of tags) {
-          const dati = usGaap[tag]?.units?.USD;
-          if (dati && dati.length > 0) return dati;
+      // ─── Estrai filing unici (annuali o trimestrali) ─────
+      function estraiFiling(usGaap, isAnnuale) {
+        const form = isAnnuale ? "10-K" : "10-Q";
+        // Cerca in tutti i tag per costruire lista filing
+        const tagsRicavi = [
+          "Revenues",
+          "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "RevenueFromContractWithCustomerIncludingAssessedTax",
+          "SalesRevenueNet",
+          "NetIncomeLoss", // fallback se non ci sono ricavi
+        ];
+
+        for (const tag of tagsRicavi) {
+          const serie = usGaap[tag]?.units?.USD;
+          if (!serie) continue;
+
+          const chiavi = new Set();
+          const filing = serie
+            .filter((v) => v.form === form)
+            .filter((v) => {
+              const chiave = `${v.fy}-${v.fp}-${v.end}`;
+              if (chiavi.has(chiave)) return false;
+              chiavi.add(chiave);
+              return true;
+            })
+            .sort((a, b) => new Date(a.end) - new Date(b.end))
+            .slice(isAnnuale ? -6 : -8);
+
+          if (filing.length > 0) return filing;
         }
         return [];
       }
 
-      // ─── Filtra i periodi giusti (annuali o trimestrali) ──
-      function filtraPeriodi(serie, isAnnuale) {
-        if (!serie || serie.length === 0) return [];
-        const form = isAnnuale ? "10-K" : "10-Q";
-        const chiavi = new Set();
-        return serie
-          .filter((v) => v.form === form)
-          .filter((v) => {
-            const chiave = isAnnuale
-              ? v.fy || new Date(v.end).getFullYear()
-              : `${v.fy}-${v.fp}`;
-            if (chiavi.has(chiave)) return false;
-            chiavi.add(chiave);
-            return true;
-          })
-          .sort((a, b) => new Date(a.end) - new Date(b.end))
-          .slice(isAnnuale ? -6 : -8);
-      }
-
       // ─── Label periodo ────────────────────────────────────
       function labelPeriodo(v, isAnnuale) {
-        if (isAnnuale) return v.fy || new Date(v.end).getFullYear();
+        if (isAnnuale) return `FY${v.fy || new Date(v.end).getFullYear()}`;
         return `${v.fy} ${v.fp}`;
       }
 
@@ -576,21 +581,14 @@
         const usGaap = dati.facts["us-gaap"] || {};
         const isAnnuale = periodoCorrente === "annual";
 
-        // Periodi di riferimento (da revenues come ancora)
-        const ricaviSerie = filtraPeriodi(
-          getSerie(
-            usGaap,
-            "Revenues",
-            "RevenueFromContractWithCustomerExcludingAssessedTax",
-            "RevenueFromContractWithCustomerIncludingAssessedTax",
-            "SalesRevenueNet",
-          ),
-          isAnnuale,
-        );
+        const filing = estraiFiling(usGaap, isAnnuale);
 
-        const periodi = ricaviSerie.map((v) => ({
+        const periodi = filing.map((v) => ({
           end: v.end,
           form: v.form,
+          accn: v.accn,
+          fy: v.fy,
+          fp: v.fp,
           label: labelPeriodo(v, isAnnuale),
         }));
 
@@ -603,14 +601,37 @@
         renderCashFlow(usGaap, periodi);
       }
 
-      // ─── Cerca valore per un periodo specifico ────────────
+      // ─── Cerca valore per un periodo — match per end+form o accn ──
       function getVal(usGaap, periodo, ...tags) {
         for (const tag of tags) {
           const serie = usGaap[tag]?.units?.USD;
           if (!serie) continue;
-          const match = serie.find(
+
+          // Prima prova match esatto su end + form
+          let match = serie.find(
             (v) => v.end === periodo.end && v.form === periodo.form,
           );
+
+          // Se non trova, prova con accn (stesso filing)
+          if (!match && periodo.accn) {
+            match = serie.find((v) => v.accn === periodo.accn);
+          }
+
+          // Fallback: stesso fy+fp
+          if (!match && periodo.fy && periodo.fp) {
+            match = serie
+              .filter(
+                (v) =>
+                  v.fy === periodo.fy &&
+                  v.fp === periodo.fp &&
+                  v.form === periodo.form,
+              )
+              .sort(
+                (a, b) =>
+                  new Date(b.filed || b.end) - new Date(a.filed || a.end),
+              )[0];
+          }
+
           if (match && match.val !== undefined) return match.val;
         }
         return null;
