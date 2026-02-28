@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Financial Check EDGAR</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0e17;
+        --surface: #111827;
+        --surface2: #1a2235;
+        --border: #1f2d45;
+        --accent: #00d4ff;
+        --green: #10b981;
+        --red: #ef4444;
+        --text: #e2e8f0;
+        --text-dim: #64748b;
+        --text-muted: #334155;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "IBM Plex Sans", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      .page-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 32px 24px;
+      }
+
+      h1 {
+        font-size: 32px;
+        font-weight: 300;
+        letter-spacing: -0.02em;
+        margin-bottom: 4px;
+      }
+      h1 span {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .subtitle {
+        color: var(--text-dim);
+        font-size: 14px;
+        margin-bottom: 32px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .search-box {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 28px;
+      }
+      .search-box h3 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        margin-bottom: 14px;
+      }
+      .search-row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .field input {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+        width: 220px;
+      }
+      .field input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .field input::placeholder {
+        color: var(--text-muted);
+      }
+
+      .toggle-group {
+        display: flex;
+        gap: 4px;
+      }
+      .tog {
+        padding: 8px 16px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--surface2);
+        color: var(--text-dim);
+        font-size: 12px;
+        font-family: "IBM Plex Mono", monospace;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .tog:hover {
+        color: var(--text);
+      }
+      .tog.attivo {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(0, 212, 255, 0.06);
+      }
+
+      .btn-search {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: "IBM Plex Mono", monospace;
+        transition: opacity 0.2s;
+      }
+      .btn-search:hover {
+        opacity: 0.85;
+      }
+      .btn-search:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .company-header {
+        display: none;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+      }
+      .company-header.visible {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .ch-name {
+        font-size: 20px;
+        font-weight: 600;
+      }
+      .ch-ticker {
+        font-family: "IBM Plex Mono", monospace;
+        color: var(--accent);
+        font-size: 16px;
+      }
+      .ch-meta {
+        font-family: "IBM Plex Mono", monospace;
+        color: var(--text-dim);
+        font-size: 13px;
+        margin-left: auto;
+      }
+
+      .status-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+      }
+      .dot.loading {
+        background: var(--accent);
+        animation: pulse 1s infinite;
+      }
+      .dot.ready {
+        background: var(--green);
+      }
+      .dot.error {
+        background: var(--red);
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      .tabs {
+        display: none;
+      }
+      .tabs.visible {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 0;
+      }
+      .tab-btn {
+        padding: 12px 24px;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-dim);
+        font-size: 13px;
+        font-family: "IBM Plex Mono", monospace;
+        cursor: pointer;
+        transition: all 0.15s;
+        letter-spacing: 0.05em;
+        margin-bottom: -1px;
+      }
+      .tab-btn:hover {
+        color: var(--text);
+      }
+      .tab-btn.attivo {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      .tab-content {
+        display: none;
+      }
+      .tab-content.visible {
+        display: block;
+      }
+
+      .fin-table-wrap {
+        border: 1px solid var(--border);
+        border-radius: 0 8px 8px 8px;
+        overflow: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      thead tr {
+        background: var(--surface2);
+      }
+      th {
+        padding: 10px 14px;
+        text-align: right;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        white-space: nowrap;
+      }
+      th:first-child {
+        text-align: left;
+        min-width: 260px;
+      }
+      td {
+        padding: 9px 14px;
+        border-bottom: 1px solid var(--border);
+        text-align: right;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      td:first-child {
+        text-align: left;
+        font-family: "IBM Plex Sans", sans-serif;
+        font-size: 13px;
+        color: var(--text-dim);
+        padding-left: 16px;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:hover td {
+        background: var(--surface);
+      }
+      .row-highlight td {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .row-highlight td:first-child {
+        color: var(--text);
+      }
+      .negative {
+        color: var(--red);
+      }
+      .section-header td {
+        background: var(--surface2) !important;
+        color: var(--text-dim) !important;
+        font-size: 11px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 6px 14px !important;
+        font-family: "IBM Plex Mono", monospace !important;
+      }
+      .empty-state {
+        padding: 40px;
+        text-align: center;
+        color: var(--text-muted);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="/navbar.js"></script>
+
+    <div class="page-content">
+      <h1>Financial Check <span>EDGAR</span></h1>
+      <p class="subtitle">
+        // prospetti finanziari ufficiali SEC · fonte: EDGAR · illimitato e
+        gratuito
+      </p>
+
+      <div class="search-box">
+        <h3>// Cerca azienda</h3>
+        <div class="search-row">
+          <div class="field">
+            <label>Ticker o CIK</label>
+            <input
+              type="text"
+              id="input-ticker"
+              placeholder="es. AAPL, NVDA, 320193..."
+            />
+          </div>
+          <div class="field">
+            <label>Periodo</label>
+            <div class="toggle-group">
+              <button
+                class="tog attivo"
+                id="tog-annual"
+                onclick="setPeriodo('annual')"
+              >
+                Annuale
+              </button>
+              <button
+                class="tog"
+                id="tog-quarter"
+                onclick="setPeriodo('quarter')"
+              >
+                Trimestrale
+              </button>
+            </div>
+          </div>
+          <button
+            class="btn-search"
+            id="btn-search"
+            onclick="cercaFinanziari()"
+          >
+            CARICA
+          </button>
+        </div>
+      </div>
+
+      <div
+        class="company-header"
+        id="company-header"
+      >
+        <span
+          class="ch-name"
+          id="ch-name"
+        ></span>
+        <span
+          class="ch-ticker"
+          id="ch-ticker"
+        ></span>
+        <span
+          class="ch-meta"
+          id="ch-meta"
+        ></span>
+      </div>
+
+      <div class="status-bar">
+        <div
+          class="dot"
+          id="status-dot"
+        ></div>
+        <span id="status-text">Inserisci un ticker o CIK e clicca CARICA</span>
+      </div>
+
+      <div
+        class="tabs"
+        id="tabs"
+      >
+        <button
+          class="tab-btn attivo"
+          onclick="showTab('income')"
+        >
+          Income Statement
+        </button>
+        <button
+          class="tab-btn"
+          onclick="showTab('balance')"
+        >
+          Balance Sheet
+        </button>
+        <button
+          class="tab-btn"
+          onclick="showTab('cashflow')"
+        >
+          Cash Flow
+        </button>
+      </div>
+
+      <div
+        id="tab-income"
+        class="tab-content visible"
+      ></div>
+      <div
+        id="tab-balance"
+        class="tab-content"
+      ></div>
+      <div
+        id="tab-cashflow"
+        class="tab-content"
+      ></div>
+    </div>
+
+    <script>
+      let periodoCorrente = "annual";
+      let factsGlobal = null;
+
+      document
+        .getElementById("input-ticker")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter") cercaFinanziari();
+        });
+
+      function setPeriodo(p) {
+        periodoCorrente = p;
+        document.getElementById("tog-annual").className =
+          "tog" + (p === "annual" ? " attivo" : "");
+        document.getElementById("tog-quarter").className =
+          "tog" + (p === "quarter" ? " attivo" : "");
+        if (factsGlobal) renderTutti(factsGlobal);
+      }
+
+      function showTab(tab) {
+        ["income", "balance", "cashflow"].forEach((t) => {
+          document.getElementById("tab-" + t).className =
+            "tab-content" + (t === tab ? " visible" : "");
+        });
+        document.querySelectorAll(".tab-btn").forEach((btn, i) => {
+          btn.className =
+            "tab-btn" +
+            (["income", "balance", "cashflow"][i] === tab ? " attivo" : "");
+        });
+      }
+
+      // ─── Cerca azienda: prima risolve il CIK ─────────────
+      async function cercaFinanziari() {
+        const input = document
+          .getElementById("input-ticker")
+          .value.trim()
+          .toUpperCase();
+        if (!input) return;
+
+        setStatus("loading", "Ricerca azienda...");
+        document.getElementById("btn-search").disabled = true;
+        document.getElementById("tabs").className = "tabs";
+        document.getElementById("company-header").className = "company-header";
+
+        try {
+          let cik;
+          let nomeAzienda = input;
+          let tickerAzienda = input;
+
+          // Se è un numero è già un CIK, altrimenti cerchiamo il ticker
+          if (/^\d+$/.test(input)) {
+            cik = input.padStart(10, "0");
+          } else {
+            // Cerca il CIK dalla lista EDGAR
+            const res = await fetch(
+              "https://www.sec.gov/files/company_tickers.json",
+            );
+            const tickers = await res.json();
+            const found = Object.values(tickers).find(
+              (a) => a.ticker.toUpperCase() === input,
+            );
+            if (!found) {
+              setStatus("error", `Ticker ${input} non trovato in EDGAR`);
+              document.getElementById("btn-search").disabled = false;
+              return;
+            }
+            cik = String(found.cik_str).padStart(10, "0");
+            nomeAzienda = found.title;
+            tickerAzienda = found.ticker;
+          }
+
+          setStatus("loading", `Caricamento dati EDGAR per ${nomeAzienda}...`);
+
+          const factsRes = await fetch(
+            `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`,
+          );
+          const facts = await factsRes.json();
+
+          factsGlobal = { facts, nomeAzienda, tickerAzienda, cik };
+
+          document.getElementById("ch-name").textContent = nomeAzienda;
+          document.getElementById("ch-ticker").textContent = tickerAzienda;
+          document.getElementById("company-header").className =
+            "company-header visible";
+
+          renderTutti(factsGlobal);
+          document.getElementById("tabs").className = "tabs visible";
+          setStatus("ready", `Dati caricati — fonte: SEC EDGAR`);
+        } catch (err) {
+          setStatus("error", "Errore: " + err.message);
+        }
+
+        document.getElementById("btn-search").disabled = false;
+      }
+
+      // ─── Estrai serie temporale da un tag EDGAR ──────────
+      function getSerie(usGaap, ...tags) {
+        for (const tag of tags) {
+          const dati = usGaap[tag]?.units?.USD;
+          if (dati && dati.length > 0) return dati;
+        }
+        return [];
+      }
+
+      // ─── Filtra i periodi giusti (annuali o trimestrali) ──
+      function filtraPeriodi(serie, isAnnuale) {
+        if (!serie || serie.length === 0) return [];
+        const form = isAnnuale ? "10-K" : "10-Q";
+        const chiavi = new Set();
+        return serie
+          .filter((v) => v.form === form)
+          .filter((v) => {
+            const chiave = isAnnuale
+              ? v.fy || new Date(v.end).getFullYear()
+              : `${v.fy}-${v.fp}`;
+            if (chiavi.has(chiave)) return false;
+            chiavi.add(chiave);
+            return true;
+          })
+          .sort((a, b) => new Date(a.end) - new Date(b.end))
+          .slice(isAnnuale ? -6 : -8);
+      }
+
+      // ─── Label periodo ────────────────────────────────────
+      function labelPeriodo(v, isAnnuale) {
+        if (isAnnuale) return v.fy || new Date(v.end).getFullYear();
+        return `${v.fy} ${v.fp}`;
+      }
+
+      // ─── Render tutti i prospetti ─────────────────────────
+      function renderTutti(dati) {
+        const usGaap = dati.facts["us-gaap"] || {};
+        const isAnnuale = periodoCorrente === "annual";
+
+        // Periodi di riferimento (da revenues come ancora)
+        const ricaviSerie = filtraPeriodi(
+          getSerie(
+            usGaap,
+            "Revenues",
+            "RevenueFromContractWithCustomerExcludingAssessedTax",
+            "RevenueFromContractWithCustomerIncludingAssessedTax",
+            "SalesRevenueNet",
+          ),
+          isAnnuale,
+        );
+
+        const periodi = ricaviSerie.map((v) => ({
+          end: v.end,
+          form: v.form,
+          label: labelPeriodo(v, isAnnuale),
+        }));
+
+        document.getElementById("ch-meta").textContent = isAnnuale
+          ? `Ultimi ${periodi.length} anni`
+          : `Ultimi ${periodi.length} trimestri`;
+
+        renderIncomeStatement(usGaap, periodi);
+        renderBalanceSheet(usGaap, periodi);
+        renderCashFlow(usGaap, periodi);
+      }
+
+      // ─── Cerca valore per un periodo specifico ────────────
+      function getVal(usGaap, periodo, ...tags) {
+        for (const tag of tags) {
+          const serie = usGaap[tag]?.units?.USD;
+          if (!serie) continue;
+          const match = serie.find(
+            (v) => v.end === periodo.end && v.form === periodo.form,
+          );
+          if (match && match.val !== undefined) return match.val;
+        }
+        return null;
+      }
+
+      // ─── INCOME STATEMENT ─────────────────────────────────
+      function renderIncomeStatement(usGaap, periodi) {
+        const righe = [
+          {
+            label: "Ricavi totali",
+            tags: [
+              "Revenues",
+              "RevenueFromContractWithCustomerExcludingAssessedTax",
+              "RevenueFromContractWithCustomerIncludingAssessedTax",
+              "SalesRevenueNet",
+            ],
+            highlight: true,
+          },
+          {
+            label: "Costo del venduto",
+            tags: [
+              "CostOfRevenue",
+              "CostOfGoodsAndServicesSold",
+              "CostOfGoodsSold",
+            ],
+          },
+          { label: "Gross Profit", tags: ["GrossProfit"], highlight: true },
+          {
+            label: "R&D",
+            tags: [
+              "ResearchAndDevelopmentExpense",
+              "ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost",
+            ],
+          },
+          { label: "SG&A", tags: ["SellingGeneralAndAdministrativeExpense"] },
+          {
+            label: "Operating Income",
+            tags: ["OperatingIncomeLoss"],
+            highlight: true,
+          },
+          {
+            label: "Interest Expense",
+            tags: ["InterestExpense", "InterestAndDebtExpense"],
+          },
+          {
+            label: "Reddito ante imposte",
+            tags: [
+              "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+              "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments",
+            ],
+          },
+          { label: "Tax provision", tags: ["IncomeTaxExpenseBenefit"] },
+          {
+            label: "Utile Netto",
+            tags: ["NetIncomeLoss", "NetIncome"],
+            highlight: true,
+          },
+          {
+            label: "EPS base",
+            tags: ["EarningsPerShareBasic"],
+            noFormat: true,
+          },
+          {
+            label: "EPS diluito",
+            tags: ["EarningsPerShareDiluted"],
+            noFormat: true,
+          },
+        ];
+        document.getElementById("tab-income").innerHTML = buildTable(
+          usGaap,
+          periodi,
+          righe,
+        );
+      }
+
+      // ─── BALANCE SHEET ────────────────────────────────────
+      function renderBalanceSheet(usGaap, periodi) {
+        const righe = [
+          { label: "— ATTIVO —", section: true },
+          {
+            label: "Cash & equivalenti",
+            tags: ["CashAndCashEquivalentsAtCarryingValue", "Cash"],
+            highlight: true,
+          },
+          {
+            label: "Investimenti breve termine",
+            tags: ["ShortTermInvestments", "AvailableForSaleSecuritiesCurrent"],
+          },
+          {
+            label: "Crediti commerciali",
+            tags: ["AccountsReceivableNetCurrent", "ReceivablesNetCurrent"],
+          },
+          { label: "Inventario", tags: ["InventoryNet", "Inventories"] },
+          {
+            label: "Totale attivo corrente",
+            tags: ["AssetsCurrent"],
+            highlight: true,
+          },
+          {
+            label: "Immobilizzazioni nette",
+            tags: ["PropertyPlantAndEquipmentNet"],
+          },
+          { label: "Goodwill", tags: ["Goodwill"] },
+          { label: "Totale attivo", tags: ["Assets"], highlight: true },
+          { label: "— PASSIVO —", section: true },
+          { label: "Debiti commerciali", tags: ["AccountsPayableCurrent"] },
+          {
+            label: "Debito breve termine",
+            tags: ["ShortTermBorrowings", "DebtCurrent"],
+          },
+          {
+            label: "Totale passivo corrente",
+            tags: ["LiabilitiesCurrent"],
+            highlight: true,
+          },
+          {
+            label: "Debito lungo termine",
+            tags: ["LongTermDebt", "LongTermDebtNoncurrent"],
+          },
+          { label: "Totale passivo", tags: ["Liabilities"], highlight: true },
+          { label: "— PATRIMONIO NETTO —", section: true },
+          {
+            label: "Utili a nuovo",
+            tags: ["RetainedEarningsAccumulatedDeficit"],
+          },
+          {
+            label: "Patrimonio netto",
+            tags: [
+              "StockholdersEquity",
+              "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+            ],
+            highlight: true,
+          },
+        ];
+        document.getElementById("tab-balance").innerHTML = buildTable(
+          usGaap,
+          periodi,
+          righe,
+        );
+      }
+
+      // ─── CASH FLOW ────────────────────────────────────────
+      function renderCashFlow(usGaap, periodi) {
+        const righe = [
+          { label: "— OPERATIVO —", section: true },
+          { label: "Utile Netto", tags: ["NetIncomeLoss", "NetIncome"] },
+          {
+            label: "Ammortamenti",
+            tags: ["DepreciationDepletionAndAmortization", "Depreciation"],
+          },
+          {
+            label: "Cash Flow Operativo",
+            tags: ["NetCashProvidedByUsedInOperatingActivities"],
+            highlight: true,
+          },
+          { label: "— INVESTIMENTI —", section: true },
+          {
+            label: "CapEx",
+            tags: [
+              "PaymentsToAcquirePropertyPlantAndEquipment",
+              "PaymentsForCapitalImprovements",
+            ],
+          },
+          {
+            label: "Acquisizioni",
+            tags: ["PaymentsToAcquireBusinessesNetOfCashAcquired"],
+          },
+          {
+            label: "Cash Flow Investimenti",
+            tags: ["NetCashProvidedByUsedInInvestingActivities"],
+            highlight: true,
+          },
+          { label: "— FINANZIAMENTO —", section: true },
+          {
+            label: "Dividendi pagati",
+            tags: ["PaymentsOfDividends", "PaymentsOfDividendsCommonStock"],
+          },
+          {
+            label: "Riacquisto azioni",
+            tags: ["PaymentsForRepurchaseOfCommonStock"],
+          },
+          {
+            label: "Cash Flow Finanziamento",
+            tags: ["NetCashProvidedByUsedInFinancingActivities"],
+            highlight: true,
+          },
+          { label: "— RIEPILOGO —", section: true },
+          { label: "Free Cash Flow", fcf: true, highlight: true },
+          {
+            label: "Variazione netta cassa",
+            tags: [
+              "CashAndCashEquivalentsPeriodIncreaseDecrease",
+              "EffectOfExchangeRateOnCashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+            ],
+          },
+        ];
+        document.getElementById("tab-cashflow").innerHTML = buildTable(
+          usGaap,
+          periodi,
+          righe,
+        );
+      }
+
+      // ─── Builder tabella ──────────────────────────────────
+      function buildTable(usGaap, periodi, righe) {
+        if (!periodi || periodi.length === 0) {
+          return `<div class="empty-state">Nessun dato disponibile per questo prospetto</div>`;
+        }
+
+        let html = `<div class="fin-table-wrap"><table><thead><tr><th>Voce</th>`;
+        periodi.forEach((p) => {
+          html += `<th>${p.label}</th>`;
+        });
+        html += `</tr></thead><tbody>`;
+
+        righe.forEach((riga) => {
+          if (riga.section) {
+            html += `<tr class="section-header"><td colspan="${periodi.length + 1}">${riga.label}</td></tr>`;
+            return;
+          }
+
+          const rowClass = riga.highlight ? ' class="row-highlight"' : "";
+          html += `<tr${rowClass}><td>${riga.label}</td>`;
+
+          periodi.forEach((p) => {
+            let val;
+
+            if (riga.fcf) {
+              const ocf = getVal(
+                usGaap,
+                p,
+                "NetCashProvidedByUsedInOperatingActivities",
+              );
+              const capex = getVal(
+                usGaap,
+                p,
+                "PaymentsToAcquirePropertyPlantAndEquipment",
+                "PaymentsForCapitalImprovements",
+              );
+              val =
+                ocf !== null && capex !== null ? ocf - Math.abs(capex) : null;
+            } else if (riga.noFormat) {
+              // EPS — cerca in units.USD/shares
+              let found = null;
+              for (const tag of riga.tags) {
+                const serie = usGaap[tag]?.units;
+                const units = serie?.["USD/shares"] || serie?.USD;
+                if (units) {
+                  const match = units.find(
+                    (v) => v.end === p.end && v.form === p.form,
+                  );
+                  if (match) {
+                    found = match.val;
+                    break;
+                  }
+                }
+              }
+              html +=
+                found !== null && found !== undefined
+                  ? `<td>${parseFloat(found).toFixed(2)}</td>`
+                  : `<td style="color:var(--text-muted)">—</td>`;
+              return;
+            } else {
+              val = getVal(usGaap, p, ...riga.tags);
+            }
+
+            if (val === null || val === undefined) {
+              html += `<td style="color:var(--text-muted)">—</td>`;
+            } else {
+              const cls = val < 0 ? ' class="negative"' : "";
+              html += `<td${cls}>${formatNum(val)}</td>`;
+            }
+          });
+
+          html += `</tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        return html;
+      }
+
+      // ─── Formattatori ─────────────────────────────────────
+      function formatNum(val) {
+        if (val === null || isNaN(val)) return "—";
+        const abs = Math.abs(val);
+        const sign = val < 0 ? "-" : "";
+        if (abs >= 1_000_000_000)
+          return sign + (abs / 1_000_000_000).toFixed(2) + "B";
+        if (abs >= 1_000_000) return sign + (abs / 1_000_000).toFixed(2) + "M";
+        if (abs >= 1_000) return sign + (abs / 1_000).toFixed(1) + "K";
+        return val.toLocaleString();
+      }
+
+      function setStatus(tipo, testo) {
+        document.getElementById("status-dot").className = "dot " + tipo;
+        document.getElementById("status-text").textContent = testo;
+      }
+    </script>
+  </body>
+</html>

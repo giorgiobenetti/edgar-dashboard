@@ -1,4 +1,3 @@
-// navbar.js — inietta la navbar in tutte le pagine
 (function () {
   const currentPath = window.location.pathname;
 
@@ -9,7 +8,8 @@
     { href: "/splits.html", label: "Splits" },
     { href: "/ipo.html", label: "IPO" },
     { href: "/listing.html", label: "Listing" },
-    { href: "/financial-check.html", label: "Financial Check" },
+    { href: "/financial-check-edgar.html", label: "FC Edgar" },
+    { href: "/financial-check.html", label: "FC Alpha" },
   ];
 
   const navHTML = `
@@ -48,10 +48,7 @@
         text-decoration: none;
         letter-spacing: 0.03em;
       }
-      .navbar-links {
-        display: flex;
-        gap: 4px;
-      }
+      .navbar-links { display: flex; gap: 4px; }
       .nav-link {
         color: #64748b;
         text-decoration: none;
@@ -61,14 +58,8 @@
         transition: all 0.15s;
         letter-spacing: 0.05em;
       }
-      .nav-link:hover {
-        color: #e2e8f0;
-        background: #1a2235;
-      }
-      .nav-link.active {
-        color: #00d4ff;
-        background: rgba(0, 212, 255, 0.08);
-      }
+      .nav-link:hover { color: #e2e8f0; background: #1a2235; }
+      .nav-link.active { color: #00d4ff; background: rgba(0,212,255,0.08); }
     </style>
   `;
 
