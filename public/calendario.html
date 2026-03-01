@@ -220,11 +220,24 @@
         font-family: "IBM Plex Mono", monospace;
       }
 
-      .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--text-muted);
+      .btn-export {
+        background: transparent;
+        color: var(--green);
+        border: 1px solid var(--green);
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: "IBM Plex Mono", monospace;
+        transition: all 0.15s;
+        display: none;
+      }
+      .btn-export.visible {
+        display: inline-block;
+      }
+      .btn-export:hover {
+        background: rgba(16, 185, 129, 0.1);
       }
       .dot.loading {
         background: var(--accent);
@@ -367,6 +380,7 @@
         color: var(--text-dim);
       }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   </head>
   <body>
     <script src="/navbar.js"></script>
@@ -442,12 +456,20 @@
         id="count-badge"
         style="display: none"
       ></span>
+      <button
+        class="btn-export"
+        id="btn-export"
+        onclick="esportaExcel()"
+      >
+        ⬇ Esporta Excel
+      </button>
     </div>
 
     <div id="risultati"></div>
 
     <script>
       const API_KEY = "6UCUC5N71W0X8L7D";
+      let datiCalendario = []; // dati correnti per export
 
       const oggi = new Date();
       const tra30 = new Date();
@@ -513,6 +535,10 @@
           }
 
           filtrate.sort((a, b) => a.reportDate.localeCompare(b.reportDate));
+
+          datiCalendario = filtrate; // salva per export
+          document.getElementById("btn-export").className =
+            filtrate.length > 0 ? "btn-export visible" : "btn-export";
 
           if (filtrate.length === 0) {
             document.getElementById("risultati").innerHTML =
@@ -687,6 +713,43 @@
             };
           })
           .filter((r) => r.symbol && r.reportDate);
+      }
+
+      function esportaExcel() {
+        if (!datiCalendario || datiCalendario.length === 0) return;
+
+        const dataInizio = document.getElementById("data-inizio").value;
+        const dataFine = document.getElementById("data-fine").value;
+
+        // Costruisce le righe per il foglio
+        const righeXls = datiCalendario.map((r) => ({
+          Ticker: r.symbol,
+          Azienda: r.name,
+          "Data trimestrale": formatDateIT(r.reportDate),
+          "Data grezza": r.reportDate,
+          "Fine periodo fiscale": r.fiscalDateEnding,
+          "EPS stimato": r.estimate ? parseFloat(r.estimate) : "",
+          Orario: r.timeOfDay || "",
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(righeXls);
+
+        // Larghezze colonne
+        ws["!cols"] = [
+          { wch: 10 },
+          { wch: 40 },
+          { wch: 20 },
+          { wch: 14 },
+          { wch: 20 },
+          { wch: 14 },
+          { wch: 14 },
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Trimestrali");
+
+        const nomeFile = `trimestrali_${dataInizio}_${dataFine}.xlsx`;
+        XLSX.writeFile(wb, nomeFile);
       }
 
       function setStatus(tipo, testo) {

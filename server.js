@@ -158,6 +158,8 @@ function fetchJSON(url, res) {
     .on("error", (e) => res.status(500).json({ errore: e.message }));
 }
 
+const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, function () {
   console.log("Server avviato su porta " + PORT);
 });
