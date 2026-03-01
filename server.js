@@ -66,7 +66,7 @@ app.get("/api/ticker/:ticker", function (req, res) {
   });
 });
 
-// ─── Debug: ultimi 5 record di un tag specifico ──────────
+// ─── Debug EDGAR tag ──────────────────────────────────────
 app.get("/api/edgar/debug/:cik/:tag", function (req, res) {
   const cik = String(req.params.cik).padStart(10, "0");
   const tag = req.params.tag;
@@ -77,13 +77,16 @@ app.get("/api/edgar/debug/:cik/:tag", function (req, res) {
     }
     const usGaap = data.facts["us-gaap"] || {};
     const serie = usGaap[tag]?.units?.USD || [];
-    const annuali = serie.filter((v) => v.form === "10-K").slice(-3);
-    const trimestrali = serie.filter((v) => v.form === "10-Q").slice(-3);
-    res.json({ tag, totale: serie.length, annuali, trimestrali });
+    res.json({
+      tag,
+      totale: serie.length,
+      annuali: serie.filter((v) => v.form === "10-K").slice(-3),
+      trimestrali: serie.filter((v) => v.form === "10-Q").slice(-3),
+    });
   });
 });
 
-// ─── Debug: lista tag us-gaap disponibili ────────────────
+// ─── Debug EDGAR tags disponibili ────────────────────────
 app.get("/api/edgar/tags/:cik", function (req, res) {
   const cik = String(req.params.cik).padStart(10, "0");
   edgar.getCompanyFacts(cik, function (err, data) {
@@ -93,7 +96,6 @@ app.get("/api/edgar/tags/:cik", function (req, res) {
     }
     const usGaap = data.facts["us-gaap"] || {};
     const tags = Object.keys(usGaap).sort();
-    // Filtra solo i tag che potrebbero essere ricavi/utile/cash
     const keywords = [
       "revenue",
       "income",
@@ -104,13 +106,16 @@ app.get("/api/edgar/tags/:cik", function (req, res) {
       "loss",
       "flow",
     ];
-    const rilevanti = tags.filter((t) =>
-      keywords.some((k) => t.toLowerCase().includes(k)),
-    );
-    res.json({ tutti: tags.length, rilevanti });
+    res.json({
+      tutti: tags.length,
+      rilevanti: tags.filter((t) =>
+        keywords.some((k) => t.toLowerCase().includes(k)),
+      ),
+    });
   });
 });
 
+// ─── EDGAR company facts ──────────────────────────────────
 app.get("/api/edgar/facts/:cik", function (req, res) {
   const cik = String(req.params.cik).padStart(10, "0");
   edgar.getCompanyFacts(cik, function (err, data) {
@@ -127,20 +132,31 @@ const FINNHUB_KEY =
   process.env.FINNHUB_KEY || "d6i8o69r01ql9cifcopgd6i8o69r01ql9cifcoq0";
 
 app.get("/api/finnhub/profile/:ticker", function (req, res) {
-  const url = `https://finnhub.io/api/v1/stock/profile2?symbol=${req.params.ticker}&token=${FINNHUB_KEY}`;
-  fetchJSON(url, res);
+  fetchJSON(
+    `https://finnhub.io/api/v1/stock/profile2?symbol=${req.params.ticker}&token=${FINNHUB_KEY}`,
+    res,
+  );
 });
 
 app.get("/api/finnhub/financials/:ticker", function (req, res) {
   const { statement, freq } = req.query;
-  const url = `https://finnhub.io/api/v1/financials?symbol=${req.params.ticker}&statement=${statement}&freq=${freq}&token=${FINNHUB_KEY}`;
-  fetchJSON(url, res);
+  fetchJSON(
+    `https://finnhub.io/api/v1/financials?symbol=${req.params.ticker}&statement=${statement}&freq=${freq}&token=${FINNHUB_KEY}`,
+    res,
+  );
 });
 
-// Debug: mostra risposta grezza Finnhub stock/metric
+app.get("/api/finnhub/metric/:ticker", function (req, res) {
+  fetchJSON(
+    `https://finnhub.io/api/v1/stock/metric?symbol=${req.params.ticker}&metric=all&token=${FINNHUB_KEY}`,
+    res,
+  );
+});
+
+// Debug: risposta grezza stock/metric
 app.get("/api/finnhub/debug/:ticker", function (req, res) {
-  const url = `https://finnhub.io/api/v1/stock/metric?symbol=${req.params.ticker}&metric=all&token=${FINNHUB_KEY}`;
   const https = require("https");
+  const url = `https://finnhub.io/api/v1/stock/metric?symbol=${req.params.ticker}&metric=all&token=${FINNHUB_KEY}`;
   https
     .get(
       url,
