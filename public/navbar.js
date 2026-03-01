@@ -10,6 +10,7 @@
     { href: "/listing.html", label: "Listing" },
     { href: "/financial-check-edgar.html", label: "FC Edgar" },
     { href: "/financial-check.html", label: "FC Alpha" },
+    { href: "/financial-check-finnhub.html", label: "FC Finnhub" },
   ];
 
   const navHTML = `

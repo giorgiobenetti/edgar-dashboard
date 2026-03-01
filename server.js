@@ -66,6 +66,23 @@ app.get("/api/ticker/:ticker", function (req, res) {
   });
 });
 
+// ─── Debug: ultimi 5 record di un tag specifico ──────────
+app.get("/api/edgar/debug/:cik/:tag", function (req, res) {
+  const cik = String(req.params.cik).padStart(10, "0");
+  const tag = req.params.tag;
+  edgar.getCompanyFacts(cik, function (err, data) {
+    if (err) {
+      res.status(500).json({ errore: err.message });
+      return;
+    }
+    const usGaap = data.facts["us-gaap"] || {};
+    const serie = usGaap[tag]?.units?.USD || [];
+    const annuali = serie.filter((v) => v.form === "10-K").slice(-3);
+    const trimestrali = serie.filter((v) => v.form === "10-Q").slice(-3);
+    res.json({ tag, totale: serie.length, annuali, trimestrali });
+  });
+});
+
 // ─── Debug: lista tag us-gaap disponibili ────────────────
 app.get("/api/edgar/tags/:cik", function (req, res) {
   const cik = String(req.params.cik).padStart(10, "0");
@@ -105,7 +122,41 @@ app.get("/api/edgar/facts/:cik", function (req, res) {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+// ─── Proxy Finnhub ────────────────────────────────────────
+const FINNHUB_KEY =
+  process.env.FINNHUB_KEY || "d6i8o69r01ql9cifcopgd6i8o69r01ql9cifcoq0";
+
+app.get("/api/finnhub/profile/:ticker", function (req, res) {
+  const url = `https://finnhub.io/api/v1/stock/profile2?symbol=${req.params.ticker}&token=${FINNHUB_KEY}`;
+  fetchJSON(url, res);
+});
+
+app.get("/api/finnhub/financials/:ticker", function (req, res) {
+  const { statement, freq } = req.query;
+  const url = `https://finnhub.io/api/v1/financials?symbol=${req.params.ticker}&statement=${statement}&freq=${freq}&token=${FINNHUB_KEY}`;
+  fetchJSON(url, res);
+});
+
+function fetchJSON(url, res) {
+  const https = require("https");
+  https
+    .get(
+      url,
+      { headers: { "User-Agent": "edgar-dashboard giorgiobenetti@gmail.com" } },
+      function (r) {
+        let data = "";
+        r.on("data", (c) => (data += c));
+        r.on("end", () => {
+          try {
+            res.json(JSON.parse(data));
+          } catch (e) {
+            res.status(500).json({ errore: "Parse error" });
+          }
+        });
+      },
+    )
+    .on("error", (e) => res.status(500).json({ errore: e.message }));
+}
 
 app.listen(PORT, function () {
   console.log("Server avviato su porta " + PORT);
