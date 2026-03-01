@@ -137,6 +137,23 @@ app.get("/api/finnhub/financials/:ticker", function (req, res) {
   fetchJSON(url, res);
 });
 
+// Debug: mostra risposta grezza Finnhub
+app.get("/api/finnhub/debug/:ticker", function (req, res) {
+  const url = `https://finnhub.io/api/v1/financials?symbol=${req.params.ticker}&statement=ic&freq=annual&token=${FINNHUB_KEY}`;
+  const https = require("https");
+  https
+    .get(
+      url,
+      { headers: { "User-Agent": "edgar-dashboard giorgiobenetti@gmail.com" } },
+      function (r) {
+        let data = "";
+        r.on("data", (c) => (data += c));
+        r.on("end", () => res.send(`Status: ${r.statusCode}\nBody: ${data}`));
+      },
+    )
+    .on("error", (e) => res.send("Error: " + e.message));
+});
+
 function fetchJSON(url, res) {
   const https = require("https");
   https
@@ -150,7 +167,13 @@ function fetchJSON(url, res) {
           try {
             res.json(JSON.parse(data));
           } catch (e) {
-            res.status(500).json({ errore: "Parse error" });
+            res
+              .status(500)
+              .json({
+                errore: "Parse error",
+                status: r.statusCode,
+                raw: data.substring(0, 300),
+              });
           }
         });
       },
