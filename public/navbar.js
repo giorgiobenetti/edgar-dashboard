@@ -12,6 +12,7 @@
     { href: "/financial-check.html", label: "FC Alpha" },
     { href: "/financial-check-finnhub.html", label: "FC Finnhub" },
     { href: "/company-snapshot.html", label: "Snapshot" },
+    { href: "/screener.html", label: "Screener" },
   ];
 
   const navHTML = `

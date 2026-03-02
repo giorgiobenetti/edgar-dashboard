@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Net Cash Screener</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0e17;
+        --surface: #111827;
+        --surface2: #1a2235;
+        --border: #1f2d45;
+        --accent: #00d4ff;
+        --green: #10b981;
+        --red: #ef4444;
+        --yellow: #f59e0b;
+        --text: #e2e8f0;
+        --text-dim: #64748b;
+        --text-muted: #334155;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "IBM Plex Sans", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+      .page-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 32px 24px;
+      }
+      h1 {
+        font-size: 32px;
+        font-weight: 300;
+        letter-spacing: -0.02em;
+        margin-bottom: 4px;
+      }
+      h1 span {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .subtitle {
+        color: var(--text-dim);
+        font-size: 14px;
+        margin-bottom: 32px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .controls {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 24px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .field input,
+      .field select {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 9px 13px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: "IBM Plex Sans", sans-serif;
+      }
+      .field input:focus,
+      .field select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .btn {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        padding: 9px 22px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: "IBM Plex Mono", monospace;
+        transition: opacity 0.2s;
+      }
+      .btn:hover {
+        opacity: 0.85;
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn-secondary {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+      }
+
+      .status-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+      }
+      .dot.loading {
+        background: var(--accent);
+        animation: pulse 1s infinite;
+      }
+      .dot.ready {
+        background: var(--green);
+      }
+      .dot.error {
+        background: var(--red);
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .summary-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+      }
+      .summary-card .val {
+        font-size: 24px;
+        font-weight: 600;
+        font-family: "IBM Plex Mono", monospace;
+        color: var(--accent);
+      }
+      .summary-card .lbl {
+        font-size: 12px;
+        color: var(--text-dim);
+        margin-top: 4px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      thead tr {
+        background: var(--surface2);
+        border-bottom: 2px solid var(--border);
+      }
+      th {
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+      }
+      th:hover {
+        color: var(--text);
+      }
+      th.sorted {
+        color: var(--accent);
+      }
+      tbody tr {
+        border-bottom: 1px solid var(--border);
+        transition: background 0.15s;
+      }
+      tbody tr:hover {
+        background: var(--surface2);
+      }
+      td {
+        padding: 10px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        white-space: nowrap;
+      }
+      td.nome {
+        font-family: "IBM Plex Sans", sans-serif;
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--text);
+      }
+      td.ticker {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .badge-green {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--green);
+      }
+      .badge-yellow {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--yellow);
+      }
+      .badge-red {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--red);
+      }
+
+      .ratio-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .ratio-track {
+        width: 80px;
+        height: 6px;
+        background: var(--border);
+        border-radius: 3px;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .ratio-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.4s;
+      }
+
+      .empty {
+        padding: 60px;
+        text-align: center;
+        color: var(--text-muted);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+      }
+      .loading-overlay {
+        padding: 40px;
+        text-align: center;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+      }
+
+      .progress-wrap {
+        margin-bottom: 16px;
+        display: none;
+      }
+      .progress-wrap.visible {
+        display: block;
+      }
+      .progress-label {
+        font-size: 12px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        margin-bottom: 6px;
+      }
+      .progress-track {
+        height: 4px;
+        background: var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 2px;
+        transition: width 0.3s;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="/navbar.js"></script>
+    <div class="page-content">
+      <h1>Net Cash <span>Screener</span></h1>
+      <p class="subtitle">
+        // aziende dove paghi principalmente per la liquidità · strategia
+        Benjamin Graham
+      </p>
+
+      <div class="controls">
+        <div class="field">
+          <label>Tipo di opportunità</label>
+          <select id="soglia">
+            <option value="1.0">
+              🔥 Occasioni rare — vale meno della sua cassa
+            </option>
+            <option
+              value="0.8"
+              selected
+            >
+              ⭐ Molto interessanti — cassa copre quasi tutto il prezzo
+            </option>
+            <option value="0.5">
+              👀 Da monitorare — cassa copre metà del prezzo
+            </option>
+            <option value="0.3">
+              📋 Tutte — anche con poca cassa rispetto al prezzo
+            </option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Min Net Cash/Share ($)</label>
+          <input
+            type="number"
+            id="min-cash"
+            value="1"
+            step="0.5"
+            style="width: 130px"
+          />
+        </div>
+        <div class="field">
+          <label>Max Market Cap</label>
+          <select id="max-cap">
+            <option value="">Tutti</option>
+            <option value="300000000">Micro cap (< $300M)</option>
+            <option value="2000000000">Small cap (< $2B)</option>
+            <option value="10000000000">Mid cap (< $10B)</option>
+          </select>
+        </div>
+        <button
+          class="btn"
+          id="btn-carica"
+          onclick="caricaScreener()"
+        >
+          CARICA
+        </button>
+        <button
+          class="btn btn-secondary"
+          onclick="esportaExcel()"
+          id="btn-export"
+          style="display: none"
+        >
+          ⬇ Excel
+        </button>
+      </div>
+
+      <div
+        class="progress-wrap"
+        id="progress-wrap"
+      >
+        <div
+          class="progress-label"
+          id="progress-label"
+        >
+          Caricamento prezzi...
+        </div>
+        <div class="progress-track">
+          <div
+            class="progress-fill"
+            id="progress-fill"
+            style="width: 0%"
+          ></div>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div
+          class="dot"
+          id="status-dot"
+        ></div>
+        <span id="status-text">Clicca CARICA per avviare lo screener</span>
+      </div>
+
+      <div
+        class="summary-cards"
+        id="summary-cards"
+        style="display: none"
+      >
+        <div class="summary-card">
+          <div
+            class="val"
+            id="s-totali"
+          >
+            —
+          </div>
+          <div class="lbl">Aziende analizzate</div>
+        </div>
+        <div class="summary-card">
+          <div
+            class="val"
+            id="s-netnets"
+          >
+            —
+          </div>
+          <div class="lbl">Net-net puri (ratio ≥ 1)</div>
+        </div>
+        <div class="summary-card">
+          <div
+            class="val"
+            id="s-interessanti"
+          >
+            —
+          </div>
+          <div class="lbl">Risultati mostrati</div>
+        </div>
+        <div class="summary-card">
+          <div
+            class="val"
+            id="s-migliore"
+          >
+            —
+          </div>
+          <div class="lbl">Ratio massimo trovato</div>
+        </div>
+      </div>
+
+      <div id="risultati"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+      let datiFinali = [];
+      let sortCol = "ratio";
+      let sortDir = -1;
+
+      async function caricaScreener() {
+        document.getElementById("btn-carica").disabled = true;
+        document.getElementById("btn-export").style.display = "none";
+        document.getElementById("summary-cards").style.display = "none";
+        document.getElementById("risultati").innerHTML =
+          '<div class="loading-overlay">⏳ Carico dati dal database...</div>';
+        setStatus("loading", "Carico aziende da Supabase...");
+
+        try {
+          // 1. Carica dati da Supabase
+          const soglia = parseFloat(document.getElementById("soglia").value);
+          const minCash =
+            parseFloat(document.getElementById("min-cash").value) || 0;
+          const maxCap = document.getElementById("max-cap").value;
+
+          const rows = await fetchSupabase(minCash);
+          setStatus(
+            "loading",
+            `${rows.length} aziende nel DB — carico prezzi da Finnhub...`,
+          );
+
+          // 2. Carica prezzi in batch con rate limiting
+          const conPrezzi = await caricaPrezzi(rows);
+
+          // 3. Calcola ratio e filtra
+          let risultati = conPrezzi
+            .map((r) => {
+              const ratio =
+                r.prezzo > 0 ? r.net_cash_per_share / r.prezzo : null;
+              return { ...r, ratio };
+            })
+            .filter((r) => r.ratio !== null && r.ratio >= soglia);
+
+          if (maxCap) {
+            risultati = risultati.filter(
+              (r) => !r.market_cap || r.market_cap <= parseFloat(maxCap),
+            );
+          }
+
+          risultati.sort((a, b) => b.ratio - a.ratio);
+          datiFinali = risultati;
+
+          // Summary
+          const netnets = conPrezzi.filter((r) => r.ratio >= 1).length;
+          document.getElementById("s-totali").textContent =
+            conPrezzi.length.toLocaleString();
+          document.getElementById("s-netnets").textContent = netnets;
+          document.getElementById("s-interessanti").textContent =
+            risultati.length;
+          document.getElementById("s-migliore").textContent =
+            risultati.length > 0 ? risultati[0].ratio.toFixed(2) + "x" : "—";
+          document.getElementById("summary-cards").style.display = "grid";
+
+          renderTabella(risultati);
+          setStatus(
+            "ready",
+            `${risultati.length} aziende trovate con ratio ≥ ${soglia}`,
+          );
+          document.getElementById("btn-export").style.display =
+            risultati.length > 0 ? "inline-block" : "none";
+        } catch (err) {
+          setStatus("error", "Errore: " + err.message);
+          document.getElementById("risultati").innerHTML =
+            '<div class="empty">Errore nel caricamento dati</div>';
+        }
+
+        document.getElementById("btn-carica").disabled = false;
+        document.getElementById("progress-wrap").className = "progress-wrap";
+      }
+
+      async function fetchSupabase(minCash) {
+        const url = `${window.SUPABASE_URL}/rest/v1/net_cash_screener?net_cash_per_share=gte.${minCash}&select=ticker,cik,nome,cash,debt_lt,debt_st,net_cash,shares_outstanding,net_cash_per_share&order=net_cash_per_share.desc&limit=2000`;
+        const res = await fetch(url, {
+          headers: {
+            apikey: window.SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${window.SUPABASE_ANON_KEY}`,
+          },
+        });
+        if (!res.ok) throw new Error("Supabase error: " + res.status);
+        return res.json();
+      }
+
+      async function caricaPrezzi(rows) {
+        const risultati = [];
+        const progressWrap = document.getElementById("progress-wrap");
+        const progressFill = document.getElementById("progress-fill");
+        const progressLabel = document.getElementById("progress-label");
+        progressWrap.className = "progress-wrap visible";
+
+        // Carica 10 prezzi alla volta con pausa
+        const BATCH = 10;
+        for (let i = 0; i < rows.length; i += BATCH) {
+          const batch = rows.slice(i, i + BATCH);
+          const prezziPromise = batch.map((r) =>
+            r.ticker
+              ? fetch(`/api/finnhub/quote/${r.ticker}`)
+                  .then((res) => res.json())
+                  .catch(() => null)
+              : Promise.resolve(null),
+          );
+          const prezzi = await Promise.all(prezziPromise);
+
+          batch.forEach((r, idx) => {
+            const q = prezzi[idx];
+            risultati.push({
+              ...r,
+              prezzo: q?.c || 0,
+              market_cap: q?.c ? q.c * r.shares_outstanding : null,
+            });
+          });
+
+          const pct = Math.round(((i + BATCH) / rows.length) * 100);
+          progressFill.style.width = Math.min(pct, 100) + "%";
+          progressLabel.textContent = `Caricamento prezzi... ${Math.min(i + BATCH, rows.length)}/${rows.length}`;
+
+          await sleep(120); // rate limiting Finnhub
+        }
+
+        return risultati;
+      }
+
+      function renderTabella(rows) {
+        if (rows.length === 0) {
+          document.getElementById("risultati").innerHTML =
+            '<div class="empty">Nessuna azienda trovata con i filtri selezionati</div>';
+          return;
+        }
+
+        let html = `
+        <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortBy('ticker')" class="${sortCol === "ticker" ? "sorted" : ""}">Ticker</th>
+              <th onclick="sortBy('nome')">Azienda</th>
+              <th onclick="sortBy('prezzo')" class="${sortCol === "prezzo" ? "sorted" : ""}">Prezzo</th>
+              <th onclick="sortBy('net_cash_per_share')" class="${sortCol === "net_cash_per_share" ? "sorted" : ""}">Net Cash/Share</th>
+              <th onclick="sortBy('ratio')" class="${sortCol === "ratio" ? "sorted" : ""}">Ratio ↕</th>
+              <th onclick="sortBy('net_cash')">Net Cash Totale</th>
+              <th onclick="sortBy('cash')">Cash</th>
+              <th onclick="sortBy('debt_lt')">Debito LT</th>
+              <th>Valutazione</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+        rows.forEach((r) => {
+          const ratio = r.ratio;
+          let badgeClass, badgeLabel;
+          if (ratio >= 1.2) {
+            badgeClass = "badge-green";
+            badgeLabel = "⭐ Net-Net";
+          } else if (ratio >= 1.0) {
+            badgeClass = "badge-green";
+            badgeLabel = "Net-Net";
+          } else if (ratio >= 0.8) {
+            badgeClass = "badge-yellow";
+            badgeLabel = "Interessante";
+          } else {
+            badgeClass = "";
+            badgeLabel = "Da monitorare";
+          }
+
+          const fillColor =
+            ratio >= 1 ? "#10b981" : ratio >= 0.8 ? "#f59e0b" : "#00d4ff";
+          const fillWidth = Math.min(ratio * 100, 100);
+
+          html += `
+          <tr>
+            <td class="ticker">${r.ticker || "—"}</td>
+            <td class="nome" title="${r.nome}">${r.nome}</td>
+            <td>${r.prezzo > 0 ? "$" + r.prezzo.toFixed(2) : "—"}</td>
+            <td style="color:var(--green)">$${parseFloat(r.net_cash_per_share).toFixed(2)}</td>
+            <td>
+              <div class="ratio-bar">
+                <div class="ratio-track"><div class="ratio-fill" style="width:${fillWidth}%;background:${fillColor}"></div></div>
+                <span style="color:${fillColor};font-weight:600">${ratio.toFixed(2)}x</span>
+              </div>
+            </td>
+            <td>${formatBig(r.net_cash)}</td>
+            <td>${formatBig(r.cash)}</td>
+            <td style="color:${r.debt_lt > 0 ? "var(--red)" : "var(--text-dim)"}">${formatBig(r.debt_lt)}</td>
+            <td><span class="badge ${badgeClass}">${badgeLabel}</span></td>
+          </tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        document.getElementById("risultati").innerHTML = html;
+      }
+
+      function sortBy(col) {
+        if (sortCol === col) sortDir *= -1;
+        else {
+          sortCol = col;
+          sortDir = -1;
+        }
+        datiFinali.sort((a, b) => {
+          const av = a[col] ?? -Infinity;
+          const bv = b[col] ?? -Infinity;
+          return typeof av === "string"
+            ? av.localeCompare(bv) * sortDir
+            : (av - bv) * sortDir;
+        });
+        renderTabella(datiFinali);
+      }
+
+      function esportaExcel() {
+        const data = datiFinali.map((r) => ({
+          Ticker: r.ticker,
+          Azienda: r.nome,
+          "Prezzo ($)": r.prezzo,
+          "Net Cash/Share ($)": parseFloat(r.net_cash_per_share).toFixed(2),
+          "Ratio (Cash/Prezzo)": r.ratio.toFixed(4),
+          "Net Cash Totale ($)": r.net_cash,
+          "Cash ($)": r.cash,
+          "Debito LT ($)": r.debt_lt,
+          "Debito ST ($)": r.debt_st,
+        }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        ws["!cols"] = [10, 30, 10, 16, 14, 18, 16, 14, 14].map((w) => ({
+          wch: w,
+        }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Net Cash Screener");
+        XLSX.writeFile(
+          wb,
+          `net_cash_screener_${new Date().toISOString().slice(0, 10)}.xlsx`,
+        );
+      }
+
+      function formatBig(v) {
+        if (!v && v !== 0) return "—";
+        const abs = Math.abs(v);
+        const sign = v < 0 ? "-" : "";
+        if (abs >= 1e12) return sign + "$" + (abs / 1e12).toFixed(2) + "T";
+        if (abs >= 1e9) return sign + "$" + (abs / 1e9).toFixed(2) + "B";
+        if (abs >= 1e6) return sign + "$" + (abs / 1e6).toFixed(2) + "M";
+        return sign + "$" + abs.toLocaleString();
+      }
+
+      function setStatus(tipo, testo) {
+        document.getElementById("status-dot").className = "dot " + tipo;
+        document.getElementById("status-text").textContent = testo;
+      }
+
+      function sleep(ms) {
+        return new Promise((r) => setTimeout(r, ms));
+      }
+
+      // Configurazione Supabase (iniettata dal server o hardcoded per ora)
+      window.SUPABASE_URL = "https://tpuozuhhmhboxjvjtkhk.supabase.co";
+      window.SUPABASE_ANON_KEY =
+        "sb_publishable_opNBO6Od2WL5G2cUPvUg-w_KM_R7SIr";
+    </script>
+  </body>
+</html>
