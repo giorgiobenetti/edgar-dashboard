@@ -709,22 +709,35 @@
         const si = s?.summaryDetail || {};
 
         // Disponibilità dati
-        const hasIncome =
-          !!s?.incomeStatementHistory?.incomeStatementHistory?.length;
-        const hasBalance =
-          !!s?.balanceSheetHistory?.balanceSheetStatements?.length;
-        const hasCashflow =
-          !!s?.cashflowStatementHistory?.cashflowStatements?.length;
-        const hasIncomeQ =
-          !!s?.incomeStatementHistoryQuarterly?.incomeStatementHistory?.length;
-        const hasBalanceQ =
-          !!s?.balanceSheetHistoryQuarterly?.balanceSheetStatements?.length;
-        const hasCashflowQ =
-          !!s?.cashflowStatementHistoryQuarterly?.cashflowStatements?.length;
+        const incomeA = s?.incomeStatementHistory?.incomeStatementHistory || [];
+        const balanceA = s?.balanceSheetHistory?.balanceSheetStatements || [];
+        const cashA = s?.cashflowStatementHistory?.cashflowStatements || [];
+        const incomeQ =
+          s?.incomeStatementHistoryQuarterly?.incomeStatementHistory || [];
+        const balanceQ =
+          s?.balanceSheetHistoryQuarterly?.balanceSheetStatements || [];
+        const cashQ =
+          s?.cashflowStatementHistoryQuarterly?.cashflowStatements || [];
 
-        const badge = (ok) =>
+        const hasIncome = !!incomeA.length;
+        const hasBalance = !!balanceA.length;
+        const hasCashflow = !!cashA.length;
+        const hasIncomeQ = !!incomeQ.length;
+        const hasBalanceQ = !!balanceQ.length;
+        const hasCashflowQ = !!cashQ.length;
+
+        // Formatta data ultimo periodo disponibile
+        function ultimoPeriodo(arr, quarterly) {
+          if (!arr.length) return null;
+          const d = new Date(arr[0].endDate);
+          return quarterly
+            ? `Q${Math.ceil((d.getMonth() + 1) / 3)} ${d.getFullYear()}`
+            : `FY${d.getFullYear()}`;
+        }
+
+        const badge = (ok, ultimo) =>
           ok
-            ? `<span class="badge-avail">✓ Disponibile</span>`
+            ? `<span class="badge-avail">✓ Aggiornato a ${ultimo}</span>`
             : `<span class="badge-miss">✗ Non disponibile</span>`;
 
         container.innerHTML = `
@@ -732,66 +745,66 @@
 
           <div class="card">
             <div class="card-header">// Disponibilità dati</div>
-            ${metricRow("Income Statement (annuale)", badge(hasIncome))}
-            ${metricRow("Balance Sheet (annuale)", badge(hasBalance))}
-            ${metricRow("Cash Flow (annuale)", badge(hasCashflow))}
-            ${metricRow("Income Statement (trimestrale)", badge(hasIncomeQ))}
-            ${metricRow("Balance Sheet (trimestrale)", badge(hasBalanceQ))}
-            ${metricRow("Cash Flow (trimestrale)", badge(hasCashflowQ))}
+            ${metricRow("Income Statement (annuale)", badge(hasIncome, ultimoPeriodo(incomeA, false)))}
+            ${metricRow("Balance Sheet (annuale)", badge(hasBalance, ultimoPeriodo(balanceA, false)))}
+            ${metricRow("Cash Flow (annuale)", badge(hasCashflow, ultimoPeriodo(cashA, false)))}
+            ${metricRow("Income Statement (trimestrale)", badge(hasIncomeQ, ultimoPeriodo(incomeQ, true)))}
+            ${metricRow("Balance Sheet (trimestrale)", badge(hasBalanceQ, ultimoPeriodo(balanceQ, true)))}
+            ${metricRow("Cash Flow (trimestrale)", badge(hasCashflowQ, ultimoPeriodo(cashQ, true)))}
           </div>
 
           <div class="card">
             <div class="card-header">// Valutazione di mercato</div>
             ${metricRow("Market Cap", formatBig(q.marketCap))}
-            ${metricRow("Enterprise Value", formatBig(ks.enterpriseValue?.raw))}
+            ${metricRow("Enterprise Value", formatBig(ks.enterpriseValue))}
             ${metricRow("P/E (TTM)", fmtVal(q.trailingPE))}
             ${metricRow("P/E (Forward)", fmtVal(q.forwardPE))}
-            ${metricRow("P/S (TTM)", fmtVal(ks.priceToSalesTrailing12Months?.raw))}
+            ${metricRow("P/S (TTM)", fmtVal(ks.priceToSalesTrailing12Months))}
             ${metricRow("P/B", fmtVal(q.priceToBook))}
-            ${metricRow("EV/EBITDA", fmtVal(ks.enterpriseToEbitda?.raw))}
-            ${metricRow("EV/Revenue", fmtVal(ks.enterpriseToRevenue?.raw))}
+            ${metricRow("EV/EBITDA", fmtVal(ks.enterpriseToEbitda))}
+            ${metricRow("EV/Revenue", fmtVal(ks.enterpriseToRevenue))}
           </div>
 
           <div class="card">
             <div class="card-header">// Redditività</div>
-            ${metricRow("Revenue (TTM)", formatBig(fs.totalRevenue?.raw))}
-            ${metricRow("Gross Margin", fmtPct(fs.grossMargins?.raw))}
-            ${metricRow("Operating Margin", fmtPct(fs.operatingMargins?.raw))}
-            ${metricRow("Profit Margin", fmtPct(fs.profitMargins?.raw))}
-            ${metricRow("ROE", fmtPct(fs.returnOnEquity?.raw))}
-            ${metricRow("ROA", fmtPct(fs.returnOnAssets?.raw))}
-            ${metricRow("EBITDA", formatBig(fs.ebitda?.raw))}
+            ${metricRow("Revenue (TTM)", formatBig(fs.totalRevenue))}
+            ${metricRow("Gross Margin", fmtPct(fs.grossMargins))}
+            ${metricRow("Operating Margin", fmtPct(fs.operatingMargins))}
+            ${metricRow("Profit Margin", fmtPct(fs.profitMargins))}
+            ${metricRow("ROE", fmtPct(fs.returnOnEquity))}
+            ${metricRow("ROA", fmtPct(fs.returnOnAssets))}
+            ${metricRow("EBITDA", formatBig(fs.ebitda))}
           </div>
 
           <div class="card">
             <div class="card-header">// Per azione</div>
             ${metricRow("EPS (TTM)", fmtVal(q.epsTrailingTwelveMonths))}
             ${metricRow("EPS (Forward)", fmtVal(q.epsForward))}
-            ${metricRow("Book Value/Share", fmtVal(ks.bookValue?.raw))}
-            ${metricRow("Revenue/Share (TTM)", fmtVal(fs.revenuePerShare?.raw))}
-            ${metricRow("FCF/Share", fmtVal(fs.freeCashflow?.raw && q.sharesOutstanding ? fs.freeCashflow.raw / q.sharesOutstanding : null))}
-            ${metricRow("Dividendo/Share", fmtVal(si.dividendRate?.raw))}
-            ${metricRow("Dividend Yield", fmtPct(si.dividendYield?.raw))}
+            ${metricRow("Book Value/Share", fmtVal(ks.bookValue))}
+            ${metricRow("Revenue/Share (TTM)", fmtVal(fs.revenuePerShare))}
+            ${metricRow("FCF/Share", fmtVal(fs.freeCashflow && q.sharesOutstanding ? fs.freeCashflow.raw / q.sharesOutstanding : null))}
+            ${metricRow("Dividendo/Share", fmtVal(si.dividendRate))}
+            ${metricRow("Dividend Yield", fmtPct(si.dividendYield))}
           </div>
 
           <div class="card">
             <div class="card-header">// Solidità finanziaria</div>
-            ${metricRow("Cash totale", formatBig(fs.totalCash?.raw))}
-            ${metricRow("Cash/Share", fmtVal(fs.totalCashPerShare?.raw))}
-            ${metricRow("Debito totale", formatBig(fs.totalDebt?.raw))}
-            ${metricRow("Debt/Equity", fmtVal(fs.debtToEquity?.raw))}
-            ${metricRow("Current Ratio", fmtVal(fs.currentRatio?.raw))}
-            ${metricRow("Quick Ratio", fmtVal(fs.quickRatio?.raw))}
+            ${metricRow("Cash totale", formatBig(fs.totalCash))}
+            ${metricRow("Cash/Share", fmtVal(fs.totalCashPerShare))}
+            ${metricRow("Debito totale", formatBig(fs.totalDebt))}
+            ${metricRow("Debt/Equity", fmtVal(fs.debtToEquity))}
+            ${metricRow("Current Ratio", fmtVal(fs.currentRatio))}
+            ${metricRow("Quick Ratio", fmtVal(fs.quickRatio))}
           </div>
 
           <div class="card">
             <div class="card-header">// Crescita</div>
-            ${metricRow("Revenue Growth (YoY)", fmtPct(fs.revenueGrowth?.raw))}
-            ${metricRow("Earnings Growth (YoY)", fmtPct(fs.earningsGrowth?.raw))}
-            ${metricRow("EPS Growth (YoY)", fmtPct(ks.earningsQuarterlyGrowth?.raw))}
+            ${metricRow("Revenue Growth (YoY)", fmtPct(fs.revenueGrowth))}
+            ${metricRow("Earnings Growth (YoY)", fmtPct(fs.earningsGrowth))}
+            ${metricRow("EPS Growth (YoY)", fmtPct(ks.earningsQuarterlyGrowth))}
             ${metricRow("Azioni in circolazione", formatNum(q.sharesOutstanding))}
             ${metricRow("Float", formatNum(q.floatShares))}
-            ${metricRow("Short %", fmtPct(ks.shortPercentOfFloat?.raw))}
+            ${metricRow("Short %", fmtPct(ks.shortPercentOfFloat))}
           </div>
 
         </div>`;
@@ -850,9 +863,9 @@
 
         const righe = getRighe(tipo);
         const dates = statements.map((s) => {
-          const d = new Date(s.endDate?.raw * 1000);
+          const d = new Date(s.endDate);
           return mode === "annual"
-            ? d.getFullYear()
+            ? `FY${d.getFullYear()}`
             : `Q${Math.ceil((d.getMonth() + 1) / 3)} ${d.getFullYear()}`;
         });
 
@@ -868,10 +881,11 @@
           }
           html += `<tr><td>${riga.label}</td>`;
           statements.forEach((s) => {
-            const val = s[riga.key]?.raw;
-            const fmt = val !== undefined ? formatBig(val) : "—";
+            const val = s[riga.key];
+            const fmt =
+              val !== undefined && val !== null ? formatBig(val) : "—";
             const cls =
-              riga.colorize && val !== undefined
+              riga.colorize && val !== undefined && val !== null
                 ? val >= 0
                   ? "val-pos"
                   : "val-neg"
