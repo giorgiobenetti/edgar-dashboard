@@ -122,6 +122,49 @@ app.get("/api/edgar/facts/:cik", function (req, res) {
   });
 });
 
+// ─── Proxy Yahoo Finance ──────────────────────────────────────
+const { YahooFinance } = require("yahoo-finance2");
+const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
+
+app.get("/api/yahoo/search", async function (req, res) {
+  try {
+    const result = await yf.search(req.query.q);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/yahoo/quote/:ticker", async function (req, res) {
+  try {
+    const result = await yf.quote(req.params.ticker);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/yahoo/summary/:ticker", async function (req, res) {
+  try {
+    const result = await yf.quoteSummary(req.params.ticker, {
+      modules: [
+        "financialData",
+        "defaultKeyStatistics",
+        "summaryDetail",
+        "incomeStatementHistory",
+        "incomeStatementHistoryQuarterly",
+        "balanceSheetHistory",
+        "balanceSheetHistoryQuarterly",
+        "cashflowStatementHistory",
+        "cashflowStatementHistoryQuarterly",
+      ],
+    });
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ─── Proxy Finnhub ────────────────────────────────────────
 const FINNHUB_KEY =
   process.env.FINNHUB_KEY || "d6i8o69r01ql9cifcopgd6i8o69r01ql9cifcoq0";

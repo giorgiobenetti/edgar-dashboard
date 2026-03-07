@@ -13,6 +13,7 @@
     { href: "/financial-check-finnhub.html", label: "FC Finnhub" },
     { href: "/company-snapshot.html", label: "Snapshot" },
     { href: "/screener.html", label: "Screener" },
+    { href: "/yahoo-explorer.html", label: "Yahoo Explorer" },
   ];
 
   const navHTML = `
