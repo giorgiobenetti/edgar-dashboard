@@ -123,8 +123,8 @@ app.get("/api/edgar/facts/:cik", function (req, res) {
 });
 
 // ─── Proxy Yahoo Finance ──────────────────────────────────────
-const { YahooFinance } = require("yahoo-finance2");
-const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
+const yahooFinance = require("yahoo-finance2").default;
+const yf = new yahooFinance({ suppressNotices: ["yahooSurvey"] });
 
 app.get("/api/yahoo/search", async function (req, res) {
   try {
