@@ -755,56 +755,62 @@
 
           <div class="card">
             <div class="card-header">// Valutazione di mercato</div>
-            ${metricRow("Market Cap", formatBig(q.marketCap))}
+            ${metricRow("Market Cap", formatBig(si.marketCap))}
             ${metricRow("Enterprise Value", formatBig(ks.enterpriseValue))}
-            ${metricRow("P/E (TTM)", fmtVal(q.trailingPE))}
-            ${metricRow("P/E (Forward)", fmtVal(q.forwardPE))}
-            ${metricRow("P/S (TTM)", fmtVal(ks.priceToSalesTrailing12Months))}
-            ${metricRow("P/B", fmtVal(q.priceToBook))}
+            ${metricRow("P/E (TTM)", fmtVal(si.trailingPE))}
+            ${metricRow("P/E (Forward)", fmtVal(si.forwardPE))}
+            ${metricRow("P/S (TTM)", fmtVal(si.priceToSalesTrailing12Months))}
+            ${metricRow("P/B", fmtVal(ks.priceToBook))}
             ${metricRow("EV/EBITDA", fmtVal(ks.enterpriseToEbitda))}
             ${metricRow("EV/Revenue", fmtVal(ks.enterpriseToRevenue))}
+            ${metricRow("Beta", fmtVal(ks.beta))}
           </div>
 
           <div class="card">
             <div class="card-header">// Redditività</div>
             ${metricRow("Revenue (TTM)", formatBig(fs.totalRevenue))}
+            ${metricRow("Gross Profit (TTM)", formatBig(fs.grossProfits))}
+            ${metricRow("EBITDA", formatBig(fs.ebitda))}
             ${metricRow("Gross Margin", fmtPct(fs.grossMargins))}
+            ${metricRow("EBITDA Margin", fmtPct(fs.ebitdaMargins))}
             ${metricRow("Operating Margin", fmtPct(fs.operatingMargins))}
             ${metricRow("Profit Margin", fmtPct(fs.profitMargins))}
             ${metricRow("ROE", fmtPct(fs.returnOnEquity))}
             ${metricRow("ROA", fmtPct(fs.returnOnAssets))}
-            ${metricRow("EBITDA", formatBig(fs.ebitda))}
           </div>
 
           <div class="card">
             <div class="card-header">// Per azione</div>
-            ${metricRow("EPS (TTM)", fmtVal(q.epsTrailingTwelveMonths))}
-            ${metricRow("EPS (Forward)", fmtVal(q.epsForward))}
+            ${metricRow("EPS (TTM)", fmtVal(ks.trailingEps))}
+            ${metricRow("EPS (Forward)", fmtVal(ks.forwardEps))}
             ${metricRow("Book Value/Share", fmtVal(ks.bookValue))}
             ${metricRow("Revenue/Share (TTM)", fmtVal(fs.revenuePerShare))}
-            ${metricRow("FCF/Share", fmtVal(fs.freeCashflow && q.sharesOutstanding ? fs.freeCashflow.raw / q.sharesOutstanding : null))}
+            ${metricRow("Cash/Share", fmtVal(fs.totalCashPerShare))}
             ${metricRow("Dividendo/Share", fmtVal(si.dividendRate))}
             ${metricRow("Dividend Yield", fmtPct(si.dividendYield))}
+            ${metricRow("Payout Ratio", fmtPct(si.payoutRatio))}
           </div>
 
           <div class="card">
             <div class="card-header">// Solidità finanziaria</div>
             ${metricRow("Cash totale", formatBig(fs.totalCash))}
-            ${metricRow("Cash/Share", fmtVal(fs.totalCashPerShare))}
             ${metricRow("Debito totale", formatBig(fs.totalDebt))}
+            ${metricRow("Free Cash Flow", formatBig(fs.freeCashflow))}
+            ${metricRow("Operating Cash Flow", formatBig(fs.operatingCashflow))}
             ${metricRow("Debt/Equity", fmtVal(fs.debtToEquity))}
             ${metricRow("Current Ratio", fmtVal(fs.currentRatio))}
             ${metricRow("Quick Ratio", fmtVal(fs.quickRatio))}
           </div>
 
           <div class="card">
-            <div class="card-header">// Crescita</div>
+            <div class="card-header">// Crescita e azioni</div>
             ${metricRow("Revenue Growth (YoY)", fmtPct(fs.revenueGrowth))}
             ${metricRow("Earnings Growth (YoY)", fmtPct(fs.earningsGrowth))}
-            ${metricRow("EPS Growth (YoY)", fmtPct(ks.earningsQuarterlyGrowth))}
-            ${metricRow("Azioni in circolazione", formatNum(q.sharesOutstanding))}
-            ${metricRow("Float", formatNum(q.floatShares))}
-            ${metricRow("Short %", fmtPct(ks.shortPercentOfFloat))}
+            ${metricRow("EPS Growth trimestrale", fmtPct(ks.earningsQuarterlyGrowth))}
+            ${metricRow("Azioni in circolazione", formatNum(ks.sharesOutstanding))}
+            ${metricRow("Float", formatNum(ks.floatShares))}
+            ${metricRow("Short % of Float", fmtPct(ks.shortPercentOfFloat))}
+            ${metricRow("Ultimo trimestre", ks.mostRecentQuarter ? new Date(ks.mostRecentQuarter).toLocaleDateString("it-IT") : "—")}
           </div>
 
         </div>`;
